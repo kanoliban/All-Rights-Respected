@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARR Protocol Specification v0.1</title>
+  <meta name="description" content="Technical specification for the All Rights Respected (ARR) attribution protocol.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --fg: #e8e4dc;
+      --muted: #8a8680;
+      --border: #2a2825;
+      --accent: #c4b998;
+      --red: #a85454;
+      --green: #a8c490;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 18px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'EB Garamond', Georgia, serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      z-index: 99;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      color: var(--fg);
+    }
+
+    .logo-symbol {
+      font-size: 1.25rem;
+      color: var(--accent);
+    }
+
+    nav {
+      display: flex;
+      gap: 2rem;
+    }
+
+    nav a {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      transition: color 0.2s;
+    }
+
+    nav a:hover {
+      color: var(--fg);
+    }
+
+    /* Main */
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 6rem 3rem 4rem;
+    }
+
+    /* Title block */
+    .title-block {
+      margin-bottom: 4rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .spec-badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 0.25rem 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 400;
+      margin-bottom: 1rem;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
+
+    .meta {
+      margin-top: 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .meta span {
+      margin-right: 2rem;
+    }
+
+    /* TOC */
+    .toc {
+      background: #0f0f0d;
+      border: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      margin-bottom: 3rem;
+    }
+
+    .toc-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+
+    .toc ol {
+      list-style: none;
+      counter-reset: toc;
+    }
+
+    .toc li {
+      counter-increment: toc;
+      margin-bottom: 0.5rem;
+    }
+
+    .toc li::before {
+      content: counter(toc) ".";
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-right: 0.75rem;
+    }
+
+    .toc a {
+      color: var(--fg);
+      text-decoration: none;
+    }
+
+    .toc a:hover {
+      color: var(--accent);
+    }
+
+    /* Sections */
+    section {
+      margin-bottom: 3rem;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin: 1.5rem 0 0.75rem;
+      color: var(--accent);
+    }
+
+    h4 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin: 1rem 0 0.5rem;
+      color: var(--muted);
+    }
+
+    p {
+      margin-bottom: 1rem;
+    }
+
+    /* Code */
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+      background: #0f0f0d;
+      padding: 0.15rem 0.4rem;
+      border-radius: 2px;
+    }
+
+    pre {
+      background: #0f0f0d;
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      overflow-x: auto;
+      margin: 1rem 0 1.5rem;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    .comment { color: var(--muted); }
+    .key { color: var(--accent); }
+    .string { color: var(--green); }
+    .bool { color: #c490a8; }
+    .number { color: #90a8c4; }
+
+    /* Lists */
+    ul, ol {
+      margin: 1rem 0 1.5rem 1.5rem;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+    }
+
+    th {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      background: #0f0f0d;
+      color: var(--accent);
+    }
+
+    /* Notes */
+    .note {
+      border-left: 2px solid var(--accent);
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      background: rgba(196, 185, 152, 0.05);
+    }
+
+    .note-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .warning {
+      border-left-color: var(--red);
+      background: rgba(168, 84, 84, 0.05);
+    }
+
+    .warning .note-title {
+      color: var(--red);
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    footer a {
+      color: var(--muted);
+      text-decoration: none;
+      padding: 0 0.5rem;
+    }
+
+    footer a:hover {
+      color: var(--fg);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      main {
+        padding: 5rem 1.5rem 3rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .meta span {
+        display: block;
+        margin-bottom: 0.25rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="index.html" class="logo">
+      <span class="logo-symbol">&#9415;</span>
+      ALL RIGHTS RESPECTED
+    </a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="https://github.com/allrightsrespected/arr">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="title-block">
+      <span class="spec-badge">SPECIFICATION</span>
+      <h1>ARR Protocol v0.1</h1>
+      <p class="subtitle">An open protocol for creative attribution in the age of AI</p>
+      <div class="meta">
+        <span>Version: 0.1.0</span>
+        <span>Status: Draft</span>
+        <span>Updated: 2026-01-29</span>
+      </div>
+    </div>
+
+    <nav class="toc">
+      <div class="toc-title">CONTENTS</div>
+      <ol>
+        <li><a href="#abstract">Abstract</a></li>
+        <li><a href="#attestation">Attestation Format</a></li>
+        <li><a href="#signatures">Signature Requirements</a></li>
+        <li><a href="#embedding">Embedding Methods</a></li>
+        <li><a href="#expiration">Expiration &amp; Revocation</a></li>
+        <li><a href="#verification">Verification Algorithm</a></li>
+        <li><a href="#privacy">Privacy Considerations</a></li>
+        <li><a href="#versioning">Versioning Strategy</a></li>
+        <li><a href="#conformance">Conformance Levels</a></li>
+      </ol>
+    </nav>
+
+    <section id="abstract">
+      <h2>1. Abstract</h2>
+      <p>The All Rights Respected (ARR) protocol defines a standard format for attesting creative intent and attribution for works created with AI tools. Unlike traditional copyright or DRM systems, ARR is designed for social recognition rather than legal enforcement.</p>
+      <p>ARR attestations are:</p>
+      <ul>
+        <li><strong>Embeddable</strong> &mdash; stored within the file itself, traveling with the work</li>
+        <li><strong>Verifiable</strong> &mdash; cryptographically signed, checkable without external services</li>
+        <li><strong>Expirable</strong> &mdash; time-limited by default, renewable by intent</li>
+        <li><strong>Revocable</strong> &mdash; creators can withdraw attestations at any time</li>
+        <li><strong>Privacy-preserving</strong> &mdash; identity is optional; pseudonymous claims are valid</li>
+      </ul>
+    </section>
+
+    <section id="attestation">
+      <h2>2. Attestation Format</h2>
+      <p>An ARR attestation is a structured document in JSON or YAML format. All implementations MUST support JSON; YAML support is RECOMMENDED.</p>
+
+      <h3>2.1 Schema</h3>
+      <pre><code>{
+  <span class="key">"attestation"</span>: {
+    <span class="key">"version"</span>: <span class="string">"arr/0.1"</span>,
+    <span class="key">"id"</span>: <span class="string">"uuid-v4"</span>,
+    <span class="key">"created"</span>: <span class="string">"ISO-8601 timestamp"</span>,
+    <span class="key">"creator"</span>: <span class="string">"creator identifier"</span>,
+    <span class="key">"intent"</span>: <span class="string">"description of creative intent"</span>,
+    <span class="key">"tool"</span>: <span class="string">"tool/version"</span>,
+    <span class="key">"upstream"</span>: [<span class="comment">/* array of upstream attestation IDs */</span>],
+    <span class="key">"expires"</span>: <span class="string">"ISO-8601 date"</span>,
+    <span class="key">"revocable"</span>: <span class="bool">true</span>,
+    <span class="key">"license"</span>: <span class="string">"optional license identifier"</span>,
+    <span class="key">"extensions"</span>: {<span class="comment">/* optional custom fields */</span>}
+  },
+  <span class="key">"signature"</span>: <span class="string">"algorithm:base64-encoded-signature"</span>
+}</code></pre>
+
+      <h3>2.2 Required Fields</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>version</code></td>
+            <td>string</td>
+            <td>Protocol version. Format: <code>arr/MAJOR.MINOR</code></td>
+          </tr>
+          <tr>
+            <td><code>id</code></td>
+            <td>string</td>
+            <td>Unique identifier (UUID v4 recommended)</td>
+          </tr>
+          <tr>
+            <td><code>created</code></td>
+            <td>string</td>
+            <td>ISO-8601 timestamp of attestation creation</td>
+          </tr>
+          <tr>
+            <td><code>creator</code></td>
+            <td>string</td>
+            <td>Creator identifier (see Section 7)</td>
+          </tr>
+          <tr>
+            <td><code>signature</code></td>
+            <td>string</td>
+            <td>Cryptographic signature (see Section 3)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>2.3 Optional Fields</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>intent</code></td>
+            <td>string</td>
+            <td>&mdash;</td>
+            <td>Human-readable description of creative intent</td>
+          </tr>
+          <tr>
+            <td><code>tool</code></td>
+            <td>string</td>
+            <td>&mdash;</td>
+            <td>Tool used to create the work. Format: <code>name/version</code></td>
+          </tr>
+          <tr>
+            <td><code>upstream</code></td>
+            <td>array</td>
+            <td><code>[]</code></td>
+            <td>IDs of upstream attestations this work builds upon</td>
+          </tr>
+          <tr>
+            <td><code>expires</code></td>
+            <td>string</td>
+            <td>5 years</td>
+            <td>ISO-8601 date when attestation expires</td>
+          </tr>
+          <tr>
+            <td><code>revocable</code></td>
+            <td>boolean</td>
+            <td><code>true</code></td>
+            <td>Whether creator can revoke the attestation</td>
+          </tr>
+          <tr>
+            <td><code>license</code></td>
+            <td>string</td>
+            <td>&mdash;</td>
+            <td>SPDX license identifier or custom license URL</td>
+          </tr>
+          <tr>
+            <td><code>extensions</code></td>
+            <td>object</td>
+            <td><code>{}</code></td>
+            <td>Custom fields for platform-specific data</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>2.4 Example</h3>
+      <pre><code>{
+  <span class="key">"attestation"</span>: {
+    <span class="key">"version"</span>: <span class="string">"arr/0.1"</span>,
+    <span class="key">"id"</span>: <span class="string">"550e8400-e29b-41d4-a716-446655440000"</span>,
+    <span class="key">"created"</span>: <span class="string">"2026-01-29T10:30:00Z"</span>,
+    <span class="key">"creator"</span>: <span class="string">"hash:sha256:7f3a9b2c4d5e6f..."</span>,
+    <span class="key">"intent"</span>: <span class="string">"Poster design for climate awareness campaign"</span>,
+    <span class="key">"tool"</span>: <span class="string">"midjourney/6.1"</span>,
+    <span class="key">"upstream"</span>: [],
+    <span class="key">"expires"</span>: <span class="string">"2031-01-29"</span>,
+    <span class="key">"revocable"</span>: <span class="bool">true</span>,
+    <span class="key">"license"</span>: <span class="string">"CC-BY-4.0"</span>
+  },
+  <span class="key">"signature"</span>: <span class="string">"ed25519:kF2h9Jx3mN7pQr..."</span>
+}</code></pre>
+    </section>
+
+    <section id="signatures">
+      <h2>3. Signature Requirements</h2>
+      <p>All attestations MUST be cryptographically signed. The signature ensures the attestation has not been tampered with and was created by someone with access to the private key.</p>
+
+      <h3>3.1 Supported Algorithms</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Algorithm</th>
+            <th>Status</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>ed25519</code></td>
+            <td>RECOMMENDED</td>
+            <td>Fast, small signatures, good security. Primary recommendation.</td>
+          </tr>
+          <tr>
+            <td><code>ecdsa-p256</code></td>
+            <td>Supported</td>
+            <td>Widely available, good for existing PKI integration.</td>
+          </tr>
+          <tr>
+            <td><code>rsa-sha256</code></td>
+            <td>Supported</td>
+            <td>Legacy support only. Larger signatures.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>3.2 Signature Format</h3>
+      <p>Signatures are encoded as: <code>algorithm:base64-encoded-signature</code></p>
+      <pre><code><span class="string">"ed25519:kF2h9Jx3mN7pQrSt8vWxYz..."</span></code></pre>
+
+      <h3>3.3 Signing Process</h3>
+      <ol>
+        <li>Serialize the <code>attestation</code> object to canonical JSON (keys sorted alphabetically, no whitespace)</li>
+        <li>Compute the signature over the serialized bytes</li>
+        <li>Encode the signature as base64</li>
+        <li>Prefix with the algorithm identifier</li>
+      </ol>
+
+      <h3>3.4 Key Distribution</h3>
+      <p>ARR does not mandate a specific key distribution mechanism. Implementers MAY use:</p>
+      <ul>
+        <li>Public key embedded in creator profile</li>
+        <li>Web-based key discovery (e.g., <code>/.well-known/arr-keys</code>)</li>
+        <li>Decentralized identity systems (DID)</li>
+        <li>Social proof (linking to verified accounts)</li>
+      </ul>
+
+      <div class="note">
+        <div class="note-title">NOTE</div>
+        <p>The signature proves control of a private key at the time of signing. It does NOT prove identity unless the public key is linked to a verified identity through an external mechanism.</p>
+      </div>
+    </section>
+
+    <section id="embedding">
+      <h2>4. Embedding Methods</h2>
+      <p>ARR attestations travel with the work. Multiple embedding methods are supported.</p>
+
+      <h3>4.1 File Metadata</h3>
+      <h4>4.1.1 Images (JPEG, PNG, WebP)</h4>
+      <p>Store attestation in XMP metadata under the namespace <code>http://arr.protocol/1.0/</code>:</p>
+      <pre><code>&lt;x:xmpmeta xmlns:x="adobe:ns:meta/"&gt;
+  &lt;rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"&gt;
+    &lt;rdf:Description rdf:about=""
+        xmlns:arr="http://arr.protocol/1.0/"&gt;
+      &lt;arr:attestation&gt;{JSON attestation}&lt;/arr:attestation&gt;
+    &lt;/rdf:Description&gt;
+  &lt;/rdf:RDF&gt;
+&lt;/x:xmpmeta&gt;</code></pre>
+
+      <h4>4.1.2 Audio (MP3, FLAC, WAV)</h4>
+      <p>Store in ID3v2 tag <code>TXXX:ARR</code> (MP3) or Vorbis comment <code>ARR</code> (FLAC/OGG).</p>
+
+      <h4>4.1.3 Video (MP4, WebM)</h4>
+      <p>Store in XMP metadata or as a custom atom/box.</p>
+
+      <h4>4.1.4 Documents (PDF)</h4>
+      <p>Store in XMP metadata stream.</p>
+
+      <h3>4.2 Sidecar Files</h3>
+      <p>For formats that don't support metadata, store attestation in a sidecar file:</p>
+      <pre><code>artwork.png
+artwork.png.arr    <span class="comment"># contains JSON attestation</span></code></pre>
+
+      <h3>4.3 Steganographic Embedding</h3>
+      <p>For robustness against metadata stripping, implementers MAY additionally embed a hash of the attestation using steganographic methods. This is OPTIONAL and implementation-specific.</p>
+
+      <div class="warning">
+        <div class="note-title">WARNING</div>
+        <p>Steganographic embedding may alter the work. Use with care and document the embedding method used.</p>
+      </div>
+
+      <h3>4.4 Content Addressing</h3>
+      <p>Attestations SHOULD include a content hash to bind the attestation to a specific version of the work:</p>
+      <pre><code><span class="key">"content_hash"</span>: <span class="string">"sha256:abc123..."</span></code></pre>
+      <p>This hash should be computed over the work's content BEFORE the attestation is embedded.</p>
+    </section>
+
+    <section id="expiration">
+      <h2>5. Expiration &amp; Revocation</h2>
+
+      <h3>5.1 Expiration</h3>
+      <p>All attestations have an expiration date. This is a core design principle: nothing is permanent without renewal.</p>
+      <ul>
+        <li>Default expiration: 5 years from creation</li>
+        <li>Maximum expiration: 25 years from creation</li>
+        <li>Expired attestations are still valid historical records but SHOULD be displayed differently</li>
+      </ul>
+
+      <h3>5.2 Renewal</h3>
+      <p>Creators can renew attestations by issuing a new attestation that references the original:</p>
+      <pre><code>{
+  <span class="key">"attestation"</span>: {
+    <span class="key">"version"</span>: <span class="string">"arr/0.1"</span>,
+    <span class="key">"id"</span>: <span class="string">"new-uuid"</span>,
+    <span class="key">"created"</span>: <span class="string">"2031-01-29T00:00:00Z"</span>,
+    <span class="key">"creator"</span>: <span class="string">"same-creator"</span>,
+    <span class="key">"renews"</span>: <span class="string">"original-attestation-id"</span>,
+    <span class="key">"expires"</span>: <span class="string">"2036-01-29"</span>
+  }
+}</code></pre>
+
+      <h3>5.3 Revocation</h3>
+      <p>If <code>revocable: true</code> (the default), creators can revoke attestations.</p>
+
+      <h4>5.3.1 Revocation Record</h4>
+      <pre><code>{
+  <span class="key">"revocation"</span>: {
+    <span class="key">"attestation_id"</span>: <span class="string">"uuid-to-revoke"</span>,
+    <span class="key">"revoked_at"</span>: <span class="string">"2027-06-15T12:00:00Z"</span>,
+    <span class="key">"reason"</span>: <span class="string">"optional explanation"</span>
+  },
+  <span class="key">"signature"</span>: <span class="string">"ed25519:..."</span>
+}</code></pre>
+
+      <h4>5.3.2 Revocation Distribution</h4>
+      <p>Revocations can be distributed via:</p>
+      <ul>
+        <li>Well-known endpoint: <code>/.well-known/arr-revocations</code></li>
+        <li>Creator's published revocation list</li>
+        <li>Platform-specific mechanisms</li>
+      </ul>
+
+      <div class="note">
+        <div class="note-title">NOTE</div>
+        <p>Verifiers are not required to check revocation lists. Revocation is a social mechanism, not a technical guarantee.</p>
+      </div>
+    </section>
+
+    <section id="verification">
+      <h2>6. Verification Algorithm</h2>
+      <p>Verifiers SHOULD implement the following algorithm:</p>
+
+      <h3>6.1 Basic Verification</h3>
+      <pre><code><span class="key">function</span> verify(attestation, signature, publicKey):
+    <span class="comment">// 1. Check version compatibility</span>
+    <span class="key">if</span> !supported(attestation.version):
+        <span class="key">return</span> { valid: <span class="bool">false</span>, reason: <span class="string">"unsupported_version"</span> }
+
+    <span class="comment">// 2. Check expiration</span>
+    <span class="key">if</span> attestation.expires < now():
+        <span class="key">return</span> { valid: <span class="bool">true</span>, expired: <span class="bool">true</span> }
+
+    <span class="comment">// 3. Serialize attestation canonically</span>
+    canonical = canonicalize(attestation)
+
+    <span class="comment">// 4. Verify signature</span>
+    <span class="key">if</span> !verifySignature(canonical, signature, publicKey):
+        <span class="key">return</span> { valid: <span class="bool">false</span>, reason: <span class="string">"invalid_signature"</span> }
+
+    <span class="comment">// 5. Success</span>
+    <span class="key">return</span> { valid: <span class="bool">true</span>, expired: <span class="bool">false</span> }</code></pre>
+
+      <h3>6.2 Extended Verification (Optional)</h3>
+      <p>Implementers MAY additionally:</p>
+      <ul>
+        <li>Check content hash against the work</li>
+        <li>Query revocation lists</li>
+        <li>Verify upstream attestations</li>
+        <li>Validate creator identity through external systems</li>
+      </ul>
+
+      <h3>6.3 Verification Results</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Meaning</th>
+            <th>Recommended Display</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>valid</code></td>
+            <td>Signature valid, not expired</td>
+            <td>Show attestation with confidence</td>
+          </tr>
+          <tr>
+            <td><code>expired</code></td>
+            <td>Signature valid, past expiration</td>
+            <td>Show with "expired" indicator</td>
+          </tr>
+          <tr>
+            <td><code>revoked</code></td>
+            <td>Creator has revoked</td>
+            <td>Show with "revoked" indicator or hide</td>
+          </tr>
+          <tr>
+            <td><code>invalid</code></td>
+            <td>Signature verification failed</td>
+            <td>Do not display attestation</td>
+          </tr>
+          <tr>
+            <td><code>unknown</code></td>
+            <td>Cannot verify (missing key, etc.)</td>
+            <td>Show with "unverified" indicator</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="privacy">
+      <h2>7. Privacy Considerations</h2>
+
+      <h3>7.1 Creator Identifiers</h3>
+      <p>The <code>creator</code> field supports multiple identifier formats:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Format</th>
+            <th>Example</th>
+            <th>Privacy Level</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Hash-based</td>
+            <td><code>hash:sha256:7f3a9b...</code></td>
+            <td>High (pseudonymous)</td>
+          </tr>
+          <tr>
+            <td>Public key</td>
+            <td><code>pubkey:ed25519:abc...</code></td>
+            <td>Medium (linkable)</td>
+          </tr>
+          <tr>
+            <td>DID</td>
+            <td><code>did:key:z6Mk...</code></td>
+            <td>Variable</td>
+          </tr>
+          <tr>
+            <td>URL</td>
+            <td><code>https://example.com/@user</code></td>
+            <td>Low (identified)</td>
+          </tr>
+          <tr>
+            <td>Email hash</td>
+            <td><code>email:sha256:...</code></td>
+            <td>Medium (verifiable)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>7.2 Unlinkability</h3>
+      <p>Creators who want attestations to be unlinkable SHOULD:</p>
+      <ul>
+        <li>Use a unique keypair per attestation</li>
+        <li>Use hash-based identifiers derived from random data</li>
+        <li>Avoid including identifying information in <code>intent</code> or <code>extensions</code></li>
+      </ul>
+
+      <h3>7.3 Right to Be Forgotten</h3>
+      <p>Revocation supports the right to be forgotten. However:</p>
+      <ul>
+        <li>Attestations embedded in files may persist in copies</li>
+        <li>Caches and archives may retain attestation data</li>
+        <li>The protocol does not guarantee deletion</li>
+      </ul>
+
+      <div class="note">
+        <div class="note-title">NOTE</div>
+        <p>ARR is designed for recognition, not surveillance. Implementers should minimize data collection and respect creator privacy preferences.</p>
+      </div>
+    </section>
+
+    <section id="versioning">
+      <h2>8. Versioning Strategy</h2>
+
+      <h3>8.1 Version Format</h3>
+      <p>Versions follow <code>arr/MAJOR.MINOR</code> format:</p>
+      <ul>
+        <li><strong>MAJOR</strong>: Breaking changes to required fields or signature format</li>
+        <li><strong>MINOR</strong>: New optional fields, clarifications, non-breaking additions</li>
+      </ul>
+
+      <h3>8.2 Compatibility</h3>
+      <ul>
+        <li>Verifiers MUST reject attestations with unknown MAJOR versions</li>
+        <li>Verifiers SHOULD accept attestations with higher MINOR versions</li>
+        <li>Unknown fields in <code>extensions</code> MUST be ignored, not rejected</li>
+      </ul>
+
+      <h3>8.3 Version History</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Version</th>
+            <th>Date</th>
+            <th>Changes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>arr/0.1</code></td>
+            <td>2026-01-29</td>
+            <td>Initial draft specification</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="conformance">
+      <h2>9. Conformance Levels</h2>
+
+      <h3>9.1 Level 1: Basic</h3>
+      <p>Minimum viable implementation:</p>
+      <ul>
+        <li>Parse and display attestation data</li>
+        <li>Verify ed25519 signatures</li>
+        <li>Check expiration dates</li>
+      </ul>
+
+      <h3>9.2 Level 2: Standard</h3>
+      <p>Recommended implementation:</p>
+      <ul>
+        <li>All Level 1 requirements</li>
+        <li>Support multiple signature algorithms</li>
+        <li>Embed attestations in file metadata</li>
+        <li>Query revocation lists</li>
+      </ul>
+
+      <h3>9.3 Level 3: Full</h3>
+      <p>Complete implementation:</p>
+      <ul>
+        <li>All Level 2 requirements</li>
+        <li>Verify upstream attestations</li>
+        <li>Support content addressing</li>
+        <li>Implement renewal workflows</li>
+        <li>Provide creator identity verification</li>
+      </ul>
+
+      <div class="note">
+        <div class="note-title">NOTE</div>
+        <p>All conformance levels are valid implementations. Platforms should choose the level appropriate for their use case.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 ALL RIGHTS RESPECTED</p>
+    <p>This specification is released into the public domain under CC0.</p>
+    <div style="margin-top: 1rem;">
+      <a href="index.html">HOME</a>
+      <a href="https://github.com/allrightsrespected/arr">GITHUB</a>
+      <a href="https://github.com/allrightsrespected/arr/discussions">DISCUSSION</a>
+    </div>
+  </footer>
+</body>
+</html>

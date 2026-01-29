@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Rights Respected — Open Protocol for Creative Attribution</title>
+  <meta name="description" content="An open protocol for creative attribution in the age of AI. Free to implement, impossible to own, designed to be given away.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --fg: #e8e4dc;
+      --muted: #8a8680;
+      --border: #2a2825;
+      --accent: #c4b998;
+      --red: #a85454;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 18px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'EB Garamond', Georgia, serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Noise overlay */
+    .noise {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0.03;
+      z-index: 1000;
+    }
+
+    /* Ticker */
+    .ticker {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 0.5rem 0;
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    .ticker-content {
+      display: flex;
+      animation: scroll 30s linear infinite;
+      white-space: nowrap;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+
+    .ticker-content span {
+      padding: 0 2rem;
+    }
+
+    @keyframes scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 2.5rem;
+      left: 0;
+      right: 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      z-index: 99;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo-symbol {
+      font-size: 1.25rem;
+      color: var(--accent);
+    }
+
+    nav {
+      display: flex;
+      gap: 2rem;
+    }
+
+    nav a {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      transition: color 0.2s;
+    }
+
+    nav a:hover {
+      color: var(--fg);
+    }
+
+    /* Main content */
+    main {
+      padding-top: 7rem;
+    }
+
+    section {
+      padding: 4rem 3rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Hero */
+    .hero {
+      padding-top: 6rem;
+      padding-bottom: 6rem;
+      text-align: center;
+    }
+
+    .legal-notice {
+      border: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      margin-bottom: 3rem;
+      text-align: left;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+      position: relative;
+    }
+
+    .legal-notice::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 2rem;
+      width: 100px;
+      height: 2px;
+      background: var(--accent);
+    }
+
+    .legal-notice-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+      margin-bottom: 0.75rem;
+    }
+
+    .legal-notice p {
+      font-size: 0.95rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 8vw, 4.5rem);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-sub {
+      font-size: 1.35rem;
+      color: var(--muted);
+      max-width: 700px;
+      margin: 0 auto 2rem;
+      line-height: 1.6;
+    }
+
+    .status-line {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    .status-line span {
+      padding: 0 0.75rem;
+    }
+
+    .status-line span:not(:last-child) {
+      border-right: 1px solid var(--border);
+    }
+
+    /* Section headers */
+    .section-header {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h2 {
+      font-size: 2rem;
+      font-weight: 400;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Protocol spec section */
+    .protocol-section {
+      border-top: 1px solid var(--border);
+    }
+
+    .spec-preview {
+      background: #0f0f0d;
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      margin: 2rem 0;
+      overflow-x: auto;
+    }
+
+    .spec-preview pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--fg);
+    }
+
+    .spec-preview .comment {
+      color: var(--muted);
+    }
+
+    .spec-preview .key {
+      color: var(--accent);
+    }
+
+    .spec-preview .string {
+      color: #a8c490;
+    }
+
+    .spec-preview .bool {
+      color: #c490a8;
+    }
+
+    /* Feature grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+
+    .feature-card {
+      background: var(--bg);
+      padding: 1.5rem;
+    }
+
+    .feature-card h3 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+      color: var(--fg);
+    }
+
+    .feature-card p {
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    /* What ARR is not */
+    .not-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .not-card {
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+    }
+
+    .not-card h3 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--red);
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .not-card h3::before {
+      content: '\2298';
+      font-size: 1.1rem;
+    }
+
+    .not-card p {
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    /* Articles section */
+    .articles-section {
+      border-top: 1px solid var(--border);
+    }
+
+    .quote-block {
+      border-left: 2px solid var(--accent);
+      padding-left: 1.5rem;
+      margin: 2rem 0;
+      font-style: italic;
+      font-size: 1.1rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .articles-list {
+      margin-top: 2rem;
+    }
+
+    .article-item {
+      display: flex;
+      gap: 2rem;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .article-item:hover {
+      background: rgba(255,255,255,0.02);
+      margin: 0 -1rem;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    .article-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      min-width: 100px;
+    }
+
+    .article-title {
+      font-size: 1.1rem;
+      letter-spacing: 0.02em;
+    }
+
+    .article-content {
+      display: none;
+      padding: 1rem 0 1rem 116px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    .article-item.expanded + .article-content {
+      display: block;
+    }
+
+    /* Timing section */
+    .timing-section {
+      border-top: 1px solid var(--border);
+    }
+
+    .timing-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      margin-top: 2rem;
+    }
+
+    .timing-column h3 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+
+    .timing-column p {
+      color: var(--muted);
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+
+    .timing-column strong {
+      color: var(--fg);
+    }
+
+    /* Implementation section */
+    .implementation-section {
+      border-top: 1px solid var(--border);
+    }
+
+    .impl-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin: 2rem 0;
+    }
+
+    .impl-card {
+      background: var(--bg);
+      padding: 2rem 1.5rem;
+    }
+
+    .impl-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .impl-card p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      padding: 0.75rem 1.5rem;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      color: var(--fg);
+      background: transparent;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: var(--fg);
+      color: var(--bg);
+    }
+
+    .btn-primary {
+      background: var(--fg);
+      color: var(--bg);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+
+    /* Signatories */
+    .signatories-section {
+      border-top: 1px solid var(--border);
+    }
+
+    .signatories-note {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+
+    .signatories-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    .signatory-slot {
+      border: 1px dashed var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+    }
+
+    .add-signatory {
+      border-style: dashed;
+      color: var(--muted);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .add-signatory:hover {
+      border-color: var(--fg);
+      color: var(--fg);
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 3rem 2rem;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    footer p {
+      margin-bottom: 0.5rem;
+    }
+
+    footer a {
+      color: var(--muted);
+      text-decoration: none;
+      padding: 0 0.5rem;
+    }
+
+    footer a:hover {
+      color: var(--fg);
+    }
+
+    .footer-links {
+      margin-top: 1.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      header {
+        padding: 1rem;
+      }
+
+      nav {
+        gap: 1rem;
+      }
+
+      section {
+        padding: 3rem 1.5rem;
+      }
+
+      .feature-grid,
+      .impl-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .not-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .timing-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .signatories-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .article-item {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .article-content {
+        padding-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Noise overlay -->
+  <canvas class="noise" id="noise"></canvas>
+
+  <!-- Ticker -->
+  <div class="ticker">
+    <div class="ticker-content">
+      <span>ALL RIGHTS RESPECTED</span>
+      <span>OPEN PROTOCOL v0.1</span>
+      <span>INFRASTRUCTURE FOR THE RESPECT ECONOMY</span>
+      <span>IMPLEMENT FREELY</span>
+      <span>NO PERMISSION REQUIRED</span>
+      <span>ALL RIGHTS RESPECTED</span>
+      <span>OPEN PROTOCOL v0.1</span>
+      <span>INFRASTRUCTURE FOR THE RESPECT ECONOMY</span>
+      <span>IMPLEMENT FREELY</span>
+      <span>NO PERMISSION REQUIRED</span>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <span class="logo-symbol">&#9415;</span>
+      ALL RIGHTS RESPECTED
+    </div>
+    <nav>
+      <a href="#protocol">The Protocol</a>
+      <a href="spec.html">Read the Spec</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="legal-notice">
+        <div class="legal-notice-label">DECLARATION &#167; 001</div>
+        <p>This is not a product. This is not a company. This is infrastructure. ARR is an open protocol for creative attribution that anyone can implement without permission, payment, or approval.</p>
+      </div>
+
+      <h1>THE RIGHT TO<br>GENERATE IS THE<br>RIGHT TO OWN.</h1>
+
+      <p class="hero-sub">While courts deliberate and laws lag, we build the infrastructure for respect. A protocol for attribution in the age of AI&mdash;free to implement, impossible to own, designed to be given away.</p>
+
+      <div class="status-line">
+        <span>PROTOCOL v0.1</span>
+        <span>OPEN STANDARD</span>
+        <span>ZERO LICENSE FEES</span>
+      </div>
+    </section>
+
+    <!-- Protocol Section -->
+    <section class="protocol-section" id="protocol">
+      <div class="section-header">THE ATTESTATION FORMAT</div>
+
+      <h2>What an ARR attestation looks like</h2>
+
+      <div class="spec-preview">
+        <pre><span class="key">attestation</span>:
+  <span class="key">version</span>: <span class="string">"arr/0.1"</span>
+  <span class="key">created</span>: <span class="string">"2026-01-29T10:30:00Z"</span>
+  <span class="key">creator</span>: <span class="string">"hash:7f3a9b2c..."</span>  <span class="comment"># privacy-preserving</span>
+  <span class="key">intent</span>: <span class="string">"Poster design for climate campaign"</span>
+  <span class="key">tool</span>: <span class="string">"midjourney/6.1"</span>
+  <span class="key">upstream</span>: []  <span class="comment"># acknowledge what came before</span>
+  <span class="key">expires</span>: <span class="string">"2031-01-29"</span>  <span class="comment"># nothing is permanent</span>
+  <span class="key">revocable</span>: <span class="bool">true</span>
+  <span class="key">signature</span>: <span class="string">"ed25519:..."</span></pre>
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h3>EMBEDDABLE</h3>
+          <p>Lives in file metadata. Travels with the work. No external registry required.</p>
+        </div>
+        <div class="feature-card">
+          <h3>VERIFIABLE</h3>
+          <p>Anyone can verify. No API keys. No accounts. Cryptographic proof, not trust.</p>
+        </div>
+        <div class="feature-card">
+          <h3>OWNERLESS</h3>
+          <p>No company controls this. No licensing fees. Implement it however you want.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- What ARR Is Not -->
+    <section class="not-section">
+      <div class="section-header">WHAT THIS IS NOT</div>
+
+      <div class="not-grid">
+        <div class="not-card">
+          <h3>NOT LEGAL EVIDENCE</h3>
+          <p>ARR is a social protocol, not courtroom proof. Use it for human recognition, not litigation.</p>
+        </div>
+        <div class="not-card">
+          <h3>NOT IDENTITY</h3>
+          <p>Anonymous attestation is supported. You don't need to reveal who you are to claim what you made.</p>
+        </div>
+        <div class="not-card">
+          <h3>NOT PERMANENT</h3>
+          <p>Attestations expire by default. Creators can revoke anytime. We build for memory, not surveillance.</p>
+        </div>
+        <div class="not-card">
+          <h3>NOT REQUIRED</h3>
+          <p>Work without ARR deserves equal respect. Platforms that require ARR for access violate our principles.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Articles -->
+    <section class="articles-section">
+      <div class="section-header">THE ARTICLES OF RESPECT</div>
+
+      <blockquote class="quote-block">
+        "We hold these truths to be self-evident: that all generations are created equal, endowed by their Prompter with certain unalienable Rights, among these Attribution, Expiration, and the pursuit of Respect."
+      </blockquote>
+
+      <div class="articles-list">
+        <div class="article-item" onclick="toggleArticle(this)">
+          <span class="article-number">ARTICLE I</span>
+          <span class="article-title">INTENT IS AUTHORSHIP</span>
+        </div>
+        <div class="article-content">
+          The one who directs creation holds creative claim. The prompt, the vision, the intention&mdash;these constitute authorship in the age of generative tools. This is the core philosophical claim. It answers "who owns AI-generated content?" with "the one who intended it into existence."
+        </div>
+
+        <div class="article-item" onclick="toggleArticle(this)">
+          <span class="article-number">ARTICLE II</span>
+          <span class="article-title">INFRASTRUCTURE MUST BE FREE</span>
+        </div>
+        <div class="article-content">
+          Protocols that charge become products. Products compete. Competition fragments. Fragmentation fails. ARR charges nothing, requires no permission, and belongs to everyone. The QR code lesson: Denso Wave's gift created a universal standard. If they'd charged licensing fees, we'd have 50 incompatible formats.
+        </div>
+
+        <div class="article-item" onclick="toggleArticle(this)">
+          <span class="article-number">ARTICLE III</span>
+          <span class="article-title">RESPECT SCALES, CONTROL DOESN'T</span>
+        </div>
+        <div class="article-content">
+          Legal enforcement requires lawyers, courts, jurisdiction, money, time. Respect requires only visibility. We build for billions by building for trust, not litigation. Copyright enforcement is reactive, expensive, and doesn't scale. A respect-based system with social pressure and platform integration can work at internet scale.
+        </div>
+
+        <div class="article-item" onclick="toggleArticle(this)">
+          <span class="article-number">ARTICLE IV</span>
+          <span class="article-title">THE RIGHT TO DISAPPEAR</span>
+        </div>
+        <div class="article-content">
+          Attestations expire. Creators revoke. Nothing is permanent without renewal. We protect attribution, not surveillance. The protocol serves memory, not prosecution. Built-in expiration (5 years default) and revocation rights prevent weaponization.
+        </div>
+
+        <div class="article-item" onclick="toggleArticle(this)">
+          <span class="article-number">ARTICLE V</span>
+          <span class="article-title">ABSENCE IS VALID</span>
+        </div>
+        <div class="article-content">
+          Work without attestation deserves equal respect. ARR is an invitation, never a requirement. Any platform that mandates ARR for access violates everything we stand for. This prevents ARR from becoming a gatekeeping mechanism. The protocol must never exclude those who choose not to participate.
+        </div>
+      </div>
+    </section>
+
+    <!-- Timing -->
+    <section class="timing-section">
+      <div class="section-header">WHY NOW</div>
+
+      <h2>The infrastructure must exist before the moment arrives</h2>
+
+      <div class="timing-grid">
+        <div class="timing-column">
+          <h3>THE MOMENT</h3>
+          <p><strong>The legal frameworks are being written now.</strong></p>
+          <p>EU AI Act: Live.<br>
+          US Copyright Office: Ruling on AI authorship.<br>
+          Courts: NYT v. OpenAI, Getty v. Stability, artists v. everyone.</p>
+          <p>Whoever defines the vocabulary for "AI content attribution" shapes the conversation. We're not waiting for permission.</p>
+        </div>
+        <div class="timing-column">
+          <h3>THE PRECEDENT</h3>
+          <p><strong>QR codes were invented in 1994.</strong></p>
+          <p>Denso Wave gave them away&mdash;no licensing fees, no control. They languished for 26 years as an industrial tool.</p>
+          <p>Then smartphones arrived. Then the pandemic. Suddenly they were everywhere.</p>
+          <p><strong>We're building infrastructure for when the moment arrives.</strong> It may take years. The protocol will be ready.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Implementation -->
+    <section class="implementation-section" id="implement">
+      <div class="section-header">IMPLEMENT ARR</div>
+
+      <h2>Three paths to participation</h2>
+
+      <div class="impl-grid">
+        <div class="impl-card">
+          <h3>For Creators</h3>
+          <p>Add ARR attestations to your work using any compatible tool. No signup required.</p>
+        </div>
+        <div class="impl-card">
+          <h3>For Platforms</h3>
+          <p>Integrate ARR detection and display. Show respect badges. Honor creator intent.</p>
+        </div>
+        <div class="impl-card">
+          <h3>For Developers</h3>
+          <p>Read the spec. Build a library. Contribute to the standard. Everything is open.</p>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <a href="spec.html" class="btn btn-primary">Read the Specification</a>
+        <a href="https://github.com/allrightsrespected/arr" class="btn">View Reference Implementation</a>
+        <a href="https://github.com/allrightsrespected/arr/discussions" class="btn">Join the Discussion</a>
+      </div>
+    </section>
+
+    <!-- Signatories -->
+    <section class="signatories-section">
+      <div class="section-header">EARLY IMPLEMENTERS</div>
+
+      <p class="signatories-note">The protocol is young. The first implementers will shape it.</p>
+
+      <div class="signatories-grid">
+        <div class="signatory-slot">&mdash;</div>
+        <div class="signatory-slot">&mdash;</div>
+        <div class="signatory-slot">&mdash;</div>
+        <a href="mailto:implement@allrightsrespected.com" class="signatory-slot add-signatory">Implement ARR &rarr;</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2026 ALL RIGHTS RESPECTED</p>
+    <p>NOT A COMPANY. A PROTOCOL.</p>
+    <p>GIVEN AWAY FREELY.</p>
+    <div class="footer-links">
+      <a href="spec.html">SPECIFICATION</a>
+      <a href="https://github.com/allrightsrespected/arr">GITHUB</a>
+      <a href="https://github.com/allrightsrespected/arr/discussions">DISCUSSION</a>
+    </div>
+  </footer>
+
+  <script>
+    // Noise canvas
+    const canvas = document.getElementById('noise');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function noise() {
+      const imageData = ctx.createImageData(canvas.width, canvas.height);
+      const data = imageData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const value = Math.random() * 255;
+        data[i] = value;
+        data[i + 1] = value;
+        data[i + 2] = value;
+        data[i + 3] = 255;
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    resize();
+    noise();
+
+    window.addEventListener('resize', () => {
+      resize();
+      noise();
+    });
+
+    // Regenerate noise occasionally for subtle animation
+    setInterval(noise, 100);
+
+    // Article toggle
+    function toggleArticle(element) {
+      element.classList.toggle('expanded');
+    }
+  </script>
+</body>
+</html>
