@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARR SDK Documentation</title>
+  <meta name="description" content="Official SDK for the All Rights Respected (ARR) attribution protocol. Create, sign, and verify attestations.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --fg: #e8e4dc;
+      --muted: #8a8680;
+      --border: #2a2825;
+      --accent: #c4b998;
+      --red: #a85454;
+      --green: #a8c490;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 18px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'EB Garamond', Georgia, serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      z-index: 99;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      color: var(--fg);
+    }
+
+    .logo-symbol {
+      font-size: 1.25rem;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      display: flex;
+      gap: 0.1em;
+    }
+
+    .logo-text {
+      /* visible on desktop */
+    }
+
+    .mobile-wordmark {
+      display: none;
+    }
+
+    nav {
+      display: flex;
+      gap: 2rem;
+    }
+
+    nav a {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      transition: color 0.2s;
+    }
+
+    nav a:hover {
+      color: var(--fg);
+    }
+
+    /* Main */
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 6rem 3rem 4rem;
+    }
+
+    /* Title block */
+    .title-block {
+      margin-bottom: 4rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .spec-badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 0.25rem 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 400;
+      margin-bottom: 1rem;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
+
+    .meta {
+      margin-top: 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .meta span {
+      margin-right: 2rem;
+    }
+
+    /* TOC */
+    .toc {
+      background: #0f0f0d;
+      border: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      margin-bottom: 3rem;
+    }
+
+    .toc ol {
+      list-style: none;
+      counter-reset: toc;
+    }
+
+    .toc li {
+      counter-increment: toc;
+      margin-bottom: 0.5rem;
+    }
+
+    .toc li::before {
+      content: counter(toc) ".";
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-right: 0.75rem;
+    }
+
+    .toc a {
+      color: var(--fg);
+      text-decoration: none;
+    }
+
+    .toc a:hover {
+      color: var(--accent);
+    }
+
+    /* Sections */
+    section {
+      margin-bottom: 3rem;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin: 1.5rem 0 0.75rem;
+      color: var(--accent);
+    }
+
+    h4 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin: 1rem 0 0.5rem;
+      color: var(--muted);
+    }
+
+    p {
+      margin-bottom: 1rem;
+    }
+
+    /* Code */
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+      background: #0f0f0d;
+      padding: 0.15rem 0.4rem;
+      border-radius: 2px;
+    }
+
+    pre {
+      background: #0f0f0d;
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      overflow-x: auto;
+      margin: 1rem 0 1.5rem;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    .comment { color: var(--muted); }
+    .key { color: var(--accent); }
+    .string { color: var(--green); }
+    .bool { color: #c490a8; }
+    .number { color: #90a8c4; }
+    .keyword { color: #c490a8; }
+    .function { color: #90c4a8; }
+
+    /* Lists */
+    ul, ol {
+      margin: 1rem 0 1.5rem 1.5rem;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+    }
+
+    th {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      background: #0f0f0d;
+      color: var(--accent);
+    }
+
+    /* Notes */
+    .note {
+      border-left: 2px solid var(--accent);
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      background: rgba(196, 185, 152, 0.05);
+    }
+
+    .note-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .warning {
+      border-left-color: var(--red);
+      background: rgba(168, 84, 84, 0.05);
+    }
+
+    .warning .note-title {
+      color: var(--red);
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    footer a {
+      color: var(--muted);
+      text-decoration: none;
+      padding: 0 0.5rem;
+    }
+
+    footer a:hover {
+      color: var(--fg);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      header {
+        padding: 0.75rem 1rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .logo-text {
+        display: none;
+      }
+
+      .logo-symbol {
+        font-size: 1.1rem;
+      }
+
+      .mobile-wordmark {
+        display: block;
+        width: 100%;
+        text-align: center;
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.15em;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--border);
+        margin-top: 0.5rem;
+        color: var(--fg);
+      }
+
+      main {
+        padding: 5rem 1.5rem 3rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .meta span {
+        display: block;
+        margin-bottom: 0.25rem;
+      }
+
+      .toc {
+        padding: 1rem;
+      }
+
+      .toc ol {
+        padding: 0;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="index.html" class="logo">
+      <span class="logo-symbol"><span>&#9398;</span><span>&#9415;</span><span>&#9415;</span></span>
+      <span class="logo-text">ALL RIGHTS RESPECTED</span>
+    </a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="spec.html">Spec</a>
+    </nav>
+    <div class="mobile-wordmark">ALL RIGHTS RESPECTED</div>
+  </header>
+
+  <main>
+    <div class="title-block">
+      <span class="spec-badge">SDK</span>
+      <h1>ARR SDK</h1>
+      <p class="subtitle">Create, sign, embed, and verify ARR attestations</p>
+      <div class="meta">
+        <span>Version: 0.1.0</span>
+        <span>TypeScript / JavaScript</span>
+        <span>MIT License</span>
+      </div>
+    </div>
+
+    <nav class="toc">
+      <ol>
+        <li><a href="#installation">Installation</a></li>
+        <li><a href="#quickstart">Quick Start</a></li>
+        <li><a href="#signing">Signing Attestations</a></li>
+        <li><a href="#api">API Reference</a></li>
+        <li><a href="#schema">Schema Definition</a></li>
+        <li><a href="#formats">Supported Formats</a></li>
+      </ol>
+    </nav>
+
+    <section id="installation">
+      <h2>1. Installation</h2>
+      <p>Install the ARR SDK via npm, yarn, or pnpm:</p>
+
+      <h3>npm</h3>
+      <pre><code>npm install @allrightsrespected/sdk</code></pre>
+
+      <h3>yarn</h3>
+      <pre><code>yarn add @allrightsrespected/sdk</code></pre>
+
+      <h3>pnpm</h3>
+      <pre><code>pnpm add @allrightsrespected/sdk</code></pre>
+
+      <h3>Requirements</h3>
+      <ul>
+        <li>Node.js 18+ or modern browser with Web Crypto API</li>
+        <li>TypeScript 5.0+ (optional, types included)</li>
+      </ul>
+
+      <div class="note">
+        <div class="note-title">NOTE</div>
+        <p>The SDK has zero runtime dependencies. Cryptographic operations use the native Web Crypto API.</p>
+      </div>
+    </section>
+
+    <section id="quickstart">
+      <h2>2. Quick Start</h2>
+      <p>Create and sign your first attestation in a few lines of code:</p>
+
+      <pre><code><span class="keyword">import</span> { createAttestation, signAttestation, generateKeyPair } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
+
+<span class="comment">// Generate a new Ed25519 keypair</span>
+<span class="keyword">const</span> { publicKey, privateKey } = <span class="keyword">await</span> <span class="function">generateKeyPair</span>();
+
+<span class="comment">// Create an attestation</span>
+<span class="keyword">const</span> attestation = <span class="function">createAttestation</span>({
+  <span class="key">creator</span>: <span class="string">`pubkey:ed25519:${publicKey}`</span>,
+  <span class="key">intent</span>: <span class="string">'Album cover for indie rock EP'</span>,
+  <span class="key">tool</span>: <span class="string">'midjourney/6.1'</span>,
+});
+
+<span class="comment">// Sign it</span>
+<span class="keyword">const</span> signed = <span class="keyword">await</span> <span class="function">signAttestation</span>(attestation, privateKey);
+
+console.<span class="function">log</span>(signed);
+<span class="comment">// {
+//   attestation: { version: 'arr/0.1', id: '...', ... },
+//   signature: 'ed25519:kF2h9Jx3mN7pQr...'
+// }</span></code></pre>
+
+      <h3>Verify an Attestation</h3>
+      <pre><code><span class="keyword">import</span> { verifyAttestation } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
+
+<span class="keyword">const</span> result = <span class="keyword">await</span> <span class="function">verifyAttestation</span>(signed, publicKey);
+
+<span class="keyword">if</span> (result.valid) {
+  console.<span class="function">log</span>(<span class="string">'Attestation is valid!'</span>);
+  console.<span class="function">log</span>(<span class="string">`Expires: ${result.expires}`</span>);
+} <span class="keyword">else</span> {
+  console.<span class="function">log</span>(<span class="string">`Invalid: ${result.reason}`</span>);
+}</code></pre>
+    </section>
+
+    <section id="signing">
+      <h2>3. Signing Attestations</h2>
+      <p>The SDK supports multiple signing algorithms. Ed25519 is recommended for most use cases.</p>
+
+      <h3>3.1 Ed25519 (Recommended)</h3>
+      <pre><code><span class="keyword">import</span> { generateKeyPair, signAttestation } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
+
+<span class="comment">// Generate Ed25519 keypair</span>
+<span class="keyword">const</span> keys = <span class="keyword">await</span> <span class="function">generateKeyPair</span>(<span class="string">'ed25519'</span>);
+
+<span class="comment">// Sign with private key</span>
+<span class="keyword">const</span> signed = <span class="keyword">await</span> <span class="function">signAttestation</span>(attestation, keys.privateKey);</code></pre>
+
+      <h3>3.2 ECDSA P-256</h3>
+      <pre><code><span class="keyword">const</span> keys = <span class="keyword">await</span> <span class="function">generateKeyPair</span>(<span class="string">'ecdsa-p256'</span>);
+<span class="keyword">const</span> signed = <span class="keyword">await</span> <span class="function">signAttestation</span>(attestation, keys.privateKey, <span class="string">'ecdsa-p256'</span>);</code></pre>
+
+      <h3>3.3 Using Existing Keys</h3>
+      <pre><code><span class="keyword">import</span> { importPrivateKey } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
+
+<span class="comment">// Import from PEM or raw bytes</span>
+<span class="keyword">const</span> privateKey = <span class="keyword">await</span> <span class="function">importPrivateKey</span>(pemString, <span class="string">'ed25519'</span>);
+
+<span class="comment">// Or from base64-encoded raw key</span>
+<span class="keyword">const</span> privateKey = <span class="keyword">await</span> <span class="function">importPrivateKey</span>(base64Key, <span class="string">'ed25519'</span>, <span class="string">'raw'</span>);</code></pre>
+
+      <div class="warning">
+        <div class="note-title">SECURITY</div>
+        <p>Never expose private keys in client-side code or commit them to version control. Use environment variables or secure key management systems.</p>
+      </div>
+    </section>
+
+    <section id="api">
+      <h2>4. API Reference</h2>
+
+      <h3>createAttestation(options)</h3>
+      <p>Creates a new unsigned attestation object.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Type</th>
+            <th>Required</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>creator</code></td>
+            <td>string</td>
+            <td>Yes</td>
+            <td>Creator identifier (hash, pubkey, DID, or URL)</td>
+          </tr>
+          <tr>
+            <td><code>intent</code></td>
+            <td>string</td>
+            <td>No</td>
+            <td>Human-readable description of creative intent</td>
+          </tr>
+          <tr>
+            <td><code>tool</code></td>
+            <td>string</td>
+            <td>No</td>
+            <td>Tool used (format: <code>name/version</code>)</td>
+          </tr>
+          <tr>
+            <td><code>upstream</code></td>
+            <td>string[]</td>
+            <td>No</td>
+            <td>IDs of upstream attestations</td>
+          </tr>
+          <tr>
+            <td><code>expires</code></td>
+            <td>string | Date</td>
+            <td>No</td>
+            <td>Expiration date (default: 5 years)</td>
+          </tr>
+          <tr>
+            <td><code>license</code></td>
+            <td>string</td>
+            <td>No</td>
+            <td>SPDX license identifier or URL</td>
+          </tr>
+          <tr>
+            <td><code>extensions</code></td>
+            <td>object</td>
+            <td>No</td>
+            <td>Custom fields for platform-specific data</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>signAttestation(attestation, privateKey, algorithm?)</h3>
+      <p>Signs an attestation and returns the complete signed object.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>attestation</code></td>
+            <td>Attestation</td>
+            <td>Unsigned attestation object</td>
+          </tr>
+          <tr>
+            <td><code>privateKey</code></td>
+            <td>CryptoKey</td>
+            <td>Private key for signing</td>
+          </tr>
+          <tr>
+            <td><code>algorithm</code></td>
+            <td>string</td>
+            <td>Optional: <code>'ed25519'</code> | <code>'ecdsa-p256'</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>verifyAttestation(signed, publicKey)</h3>
+      <p>Verifies a signed attestation.</p>
+      <pre><code><span class="keyword">interface</span> VerificationResult {
+  <span class="key">valid</span>: <span class="bool">boolean</span>;
+  <span class="key">expired</span>?: <span class="bool">boolean</span>;
+  <span class="key">reason</span>?: <span class="string">'invalid_signature'</span> | <span class="string">'unsupported_version'</span> | <span class="string">'malformed'</span>;
+  <span class="key">expires</span>?: Date;
+}</code></pre>
+
+      <h3>embedAttestation(file, signed, options?)</h3>
+      <p>Embeds a signed attestation into file metadata.</p>
+      <pre><code><span class="keyword">const</span> embeddedFile = <span class="keyword">await</span> <span class="function">embedAttestation</span>(imageBuffer, signed, {
+  <span class="key">format</span>: <span class="string">'xmp'</span>,  <span class="comment">// 'xmp' | 'exif' | 'sidecar'</span>
+});
+
+<span class="comment">// Write to disk</span>
+<span class="keyword">await</span> fs.<span class="function">writeFile</span>(<span class="string">'artwork-with-arr.png'</span>, embeddedFile);</code></pre>
+
+      <h3>extractAttestation(file)</h3>
+      <p>Extracts an attestation from file metadata.</p>
+      <pre><code><span class="keyword">const</span> signed = <span class="keyword">await</span> <span class="function">extractAttestation</span>(imageBuffer);
+
+<span class="keyword">if</span> (signed) {
+  console.<span class="function">log</span>(signed.attestation.creator);
+  console.<span class="function">log</span>(signed.attestation.intent);
+}</code></pre>
+    </section>
+
+    <section id="schema">
+      <h2>5. Schema Definition</h2>
+      <p>The complete TypeScript type definitions for ARR attestations:</p>
+
+      <pre><code><span class="keyword">interface</span> Attestation {
+  <span class="key">version</span>: <span class="string">'arr/0.1'</span>;
+  <span class="key">id</span>: string;           <span class="comment">// UUID v4</span>
+  <span class="key">created</span>: string;      <span class="comment">// ISO-8601 timestamp</span>
+  <span class="key">creator</span>: string;      <span class="comment">// Creator identifier</span>
+  <span class="key">intent</span>?: string;      <span class="comment">// Creative intent description</span>
+  <span class="key">tool</span>?: string;        <span class="comment">// Tool name/version</span>
+  <span class="key">upstream</span>?: string[];  <span class="comment">// Upstream attestation IDs</span>
+  <span class="key">expires</span>?: string;     <span class="comment">// ISO-8601 date</span>
+  <span class="key">revocable</span>?: <span class="bool">boolean</span>; <span class="comment">// Default: true</span>
+  <span class="key">license</span>?: string;     <span class="comment">// SPDX identifier or URL</span>
+  <span class="key">extensions</span>?: Record&lt;string, unknown&gt;;
+}
+
+<span class="keyword">interface</span> SignedAttestation {
+  <span class="key">attestation</span>: Attestation;
+  <span class="key">signature</span>: string;    <span class="comment">// algorithm:base64-signature</span>
+}
+
+<span class="keyword">type</span> CreatorIdentifier =
+  | <span class="string">`hash:sha256:${string}`</span>
+  | <span class="string">`pubkey:ed25519:${string}`</span>
+  | <span class="string">`pubkey:ecdsa-p256:${string}`</span>
+  | <span class="string">`did:${string}`</span>
+  | <span class="string">`https://${string}`</span>
+  | <span class="string">`email:sha256:${string}`</span>;</code></pre>
+
+      <h3>JSON Schema</h3>
+      <p>For JSON Schema validation, see <a href="https://github.com/allrightsrespected/arr/blob/main/schema/attestation.schema.json" style="color: var(--accent);">attestation.schema.json</a> in the repository.</p>
+    </section>
+
+    <section id="formats">
+      <h2>6. Supported Formats</h2>
+      <p>The SDK supports embedding attestations in various file formats:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Format</th>
+            <th>Extensions</th>
+            <th>Embedding Method</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>JPEG</td>
+            <td><code>.jpg</code>, <code>.jpeg</code></td>
+            <td>XMP metadata</td>
+            <td>Supported</td>
+          </tr>
+          <tr>
+            <td>PNG</td>
+            <td><code>.png</code></td>
+            <td>XMP metadata (iTXt chunk)</td>
+            <td>Supported</td>
+          </tr>
+          <tr>
+            <td>WebP</td>
+            <td><code>.webp</code></td>
+            <td>XMP metadata</td>
+            <td>Supported</td>
+          </tr>
+          <tr>
+            <td>PDF</td>
+            <td><code>.pdf</code></td>
+            <td>XMP metadata stream</td>
+            <td>Supported</td>
+          </tr>
+          <tr>
+            <td>MP3</td>
+            <td><code>.mp3</code></td>
+            <td>ID3v2 TXXX:ARR tag</td>
+            <td>Supported</td>
+          </tr>
+          <tr>
+            <td>FLAC</td>
+            <td><code>.flac</code></td>
+            <td>Vorbis comment</td>
+            <td>Supported</td>
+          </tr>
+          <tr>
+            <td>MP4</td>
+            <td><code>.mp4</code>, <code>.m4a</code></td>
+            <td>XMP metadata</td>
+            <td>Beta</td>
+          </tr>
+          <tr>
+            <td>Any</td>
+            <td><code>*</code></td>
+            <td>Sidecar file (<code>.arr</code>)</td>
+            <td>Supported</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Sidecar Files</h3>
+      <p>For formats that don't support metadata embedding, use sidecar files:</p>
+      <pre><code>artwork.png
+artwork.png.arr    <span class="comment"># JSON attestation file</span></code></pre>
+
+      <pre><code><span class="keyword">import</span> { writeSidecar, readSidecar } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
+
+<span class="comment">// Write sidecar</span>
+<span class="keyword">await</span> <span class="function">writeSidecar</span>(<span class="string">'./artwork.png'</span>, signed);
+
+<span class="comment">// Read sidecar</span>
+<span class="keyword">const</span> attestation = <span class="keyword">await</span> <span class="function">readSidecar</span>(<span class="string">'./artwork.png'</span>);</code></pre>
+
+      <div class="note">
+        <div class="note-title">NOTE</div>
+        <p>When distributing work with sidecar attestations, include both the original file and the <code>.arr</code> sidecar file together.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 ALL RIGHTS RESPECTED</p>
+    <p>This documentation is released into the public domain under CC0.</p>
+    <div style="margin-top: 1rem;">
+      <a href="index.html">HOME</a>
+      <a href="spec.html">SPEC</a>
+    </div>
+  </footer>
+</body>
+</html>
