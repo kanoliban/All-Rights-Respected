@@ -70,6 +70,16 @@
       font-size: 1.25rem;
       color: var(--accent);
       letter-spacing: 0.1em;
+      display: flex;
+      gap: 0.1em;
+    }
+
+    .logo-text {
+      /* visible on desktop */
+    }
+
+    .mobile-wordmark {
+      display: none;
     }
 
     nav {
@@ -321,6 +331,33 @@
 
     /* Responsive */
     @media (max-width: 768px) {
+      header {
+        padding: 0.75rem 1rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .logo-text {
+        display: none;
+      }
+
+      .logo-symbol {
+        font-size: 1.1rem;
+      }
+
+      .mobile-wordmark {
+        display: block;
+        width: 100%;
+        text-align: center;
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.15em;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--border);
+        margin-top: 0.5rem;
+        color: var(--fg);
+      }
+
       main {
         padding: 5rem 1.5rem 3rem;
       }
@@ -339,12 +376,13 @@
 <body>
   <header>
     <a href="index.html" class="logo">
-      <span class="logo-symbol">&#9398;&#9415;&#9415;</span>
-      ALL RIGHTS RESPECTED
+      <span class="logo-symbol"><span>&#9398;</span><span>&#9415;</span><span>&#9415;</span></span>
+      <span class="logo-text">ALL RIGHTS RESPECTED</span>
     </a>
     <nav>
       <a href="index.html">Home</a>
     </nav>
+    <div class="mobile-wordmark">ALL RIGHTS RESPECTED</div>
   </header>
 
   <main>
