@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thesis — All Rights Respected</title>
+  <meta name="description" content="The future of creative attribution is already being written. Here's what we believe—and why it matters.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --fg: #e8e4dc;
+      --muted: #8a8680;
+      --border: #2a2825;
+      --accent: #c4b998;
+      --red: #a85454;
+      --green: #a8c490;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 18px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'EB Garamond', Georgia, serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* Ticker */
+    .ticker {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 0.5rem 0;
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    .ticker-content {
+      display: flex;
+      animation: scroll 30s linear infinite;
+      white-space: nowrap;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+
+    .ticker-content span {
+      padding: 0 2rem;
+    }
+
+    @keyframes scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 2.5rem;
+      left: 0;
+      right: 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      z-index: 99;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      color: var(--fg);
+    }
+
+    .logo-symbol {
+      font-size: 1.25rem;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      display: flex;
+      gap: 0.1em;
+    }
+
+    .logo-text {
+      /* visible on desktop */
+    }
+
+    .mobile-wordmark {
+      display: none;
+    }
+
+    nav {
+      display: flex;
+      gap: 2rem;
+    }
+
+    nav a {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      transition: color 0.2s;
+    }
+
+    nav a:hover {
+      color: var(--fg);
+    }
+
+    /* Main */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 8rem 3rem 4rem;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      margin-bottom: 5rem;
+      padding-bottom: 3rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .page-badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 0.25rem 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 400;
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+
+    .hero-sub {
+      color: var(--muted);
+      font-size: 1.2rem;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* Comparison sections */
+    .comparison-section {
+      margin-bottom: 5rem;
+    }
+
+    .comparison-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+
+    .comparison-card {
+      background: var(--bg);
+      padding: 2rem;
+    }
+
+    .comparison-card.without {
+      opacity: 0.7;
+    }
+
+    .comparison-card.with-arr {
+      border-left: 2px solid var(--accent);
+    }
+
+    .card-header {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-header.without-header {
+      color: var(--muted);
+    }
+
+    .card-header.with-header {
+      color: var(--accent);
+    }
+
+    .arr-badge-mini {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.15rem;
+      font-size: 0.8rem;
+    }
+
+    .image-placeholder {
+      background: #0f0f0d;
+      border: 1px solid var(--border);
+      aspect-ratio: 4/3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .image-placeholder img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .placeholder-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+      padding: 1rem;
+    }
+
+    .card-content p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    .attestation-preview {
+      background: #0f0f0d;
+      border: 1px solid var(--border);
+      padding: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      line-height: 1.6;
+    }
+
+    .attestation-preview .key {
+      color: var(--accent);
+    }
+
+    .attestation-preview .value {
+      color: var(--fg);
+    }
+
+    .attestation-preview .comment {
+      color: var(--muted);
+    }
+
+    /* Thesis statement */
+    .thesis-statement {
+      border-left: 2px solid var(--accent);
+      padding: 1.5rem 2rem;
+      background: rgba(196, 185, 152, 0.03);
+    }
+
+    .thesis-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .thesis-statement p {
+      font-size: 1.05rem;
+      font-style: italic;
+      color: var(--fg);
+      margin: 0;
+    }
+
+    /* Closing */
+    .closing {
+      text-align: center;
+      padding: 4rem 2rem;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+
+    .closing p {
+      font-size: 1.1rem;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .closing p:last-of-type {
+      color: var(--fg);
+      font-size: 1.2rem;
+      margin-top: 1.5rem;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    footer a {
+      color: var(--muted);
+      text-decoration: none;
+      padding: 0 0.5rem;
+    }
+
+    footer a:hover {
+      color: var(--fg);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      header {
+        padding: 0.75rem 1rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .logo-text {
+        display: none;
+      }
+
+      .logo-symbol {
+        font-size: 1.1rem;
+      }
+
+      .mobile-wordmark {
+        display: block;
+        width: 100%;
+        text-align: center;
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.15em;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--border);
+        margin-top: 0.5rem;
+        color: var(--fg);
+      }
+
+      main {
+        padding: 7rem 1.5rem 3rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .comparison-card.with-arr {
+        border-left: none;
+        border-top: 2px solid var(--accent);
+      }
+
+      .thesis-statement {
+        padding: 1rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Ticker -->
+  <div class="ticker">
+    <div class="ticker-content">
+      <span>ALL RIGHTS RESPECTED</span>
+      <span>OPEN PROTOCOL v0.1</span>
+      <span>INFRASTRUCTURE FOR THE RESPECT ECONOMY</span>
+      <span>IMPLEMENT FREELY</span>
+      <span>NO PERMISSION REQUIRED</span>
+      <span>ALL RIGHTS RESPECTED</span>
+      <span>OPEN PROTOCOL v0.1</span>
+      <span>INFRASTRUCTURE FOR THE RESPECT ECONOMY</span>
+      <span>IMPLEMENT FREELY</span>
+      <span>NO PERMISSION REQUIRED</span>
+    </div>
+  </div>
+
+  <header>
+    <a href="index.html" class="logo">
+      <span class="logo-symbol"><span>&#9398;</span><span>&#9415;</span><span>&#9415;</span></span>
+      <span class="logo-text">ALL RIGHTS RESPECTED</span>
+    </a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="spec.html">Spec</a>
+      <a href="sdk.html">SDK</a>
+      <a href="platforms.html">Platforms</a>
+    </nav>
+    <div class="mobile-wordmark">ALL RIGHTS RESPECTED</div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <div class="hero">
+      <span class="page-badge">THESIS</span>
+      <h1>The future of creative attribution<br>is already being written.</h1>
+      <p class="hero-sub">Here's what we believe—and why it matters.</p>
+    </div>
+
+    <!-- 1. Intent is Authorship -->
+    <section class="comparison-section">
+      <div class="comparison-label">01 / MIDJOURNEY ARTWORK</div>
+      <div class="comparison-grid">
+        <div class="comparison-card without">
+          <div class="card-header without-header">WITHOUT</div>
+          <div class="image-placeholder">
+            <div class="placeholder-text">
+              Beautiful image.<br>
+              No context.<br><br>
+              Who made this?<br>
+              An AI? A person? Both?<br><br>
+              The creative vision is invisible.
+            </div>
+          </div>
+          <div class="card-content">
+            <p>An image exists. It circulates. It gets saved, shared, remixed. The intent behind it—the hours of prompt refinement, the artistic vision, the specific creative choices—all of it vanishes the moment the file leaves the generator.</p>
+          </div>
+        </div>
+        <div class="comparison-card with-arr">
+          <div class="card-header with-header">
+            <span class="arr-badge-mini">&#9398;&#9415;&#9415;</span> WITH ARR
+          </div>
+          <div class="image-placeholder">
+            <div class="attestation-preview">
+              <span class="key">creator:</span> <span class="value">hash:7f3a9b2c...</span><br>
+              <span class="key">intent:</span> <span class="value">"Album cover exploring solitude in digital spaces"</span><br>
+              <span class="key">tool:</span> <span class="value">midjourney/6.1</span><br>
+              <span class="key">created:</span> <span class="value">2026-01-15</span><br>
+              <span class="key">expires:</span> <span class="value">2031-01-15</span>
+            </div>
+          </div>
+          <div class="card-content">
+            <p>The same image, but now it carries its own context. The creator's intent is visible. The tool is acknowledged. The work speaks for itself—not just aesthetically, but attributionally.</p>
+          </div>
+        </div>
+      </div>
+      <div class="thesis-statement">
+        <div class="thesis-title">INTENT IS AUTHORSHIP</div>
+        <p>The prompt is the creative act. The one who directs creation holds creative claim. We don't need to resolve "is AI art real art?" We need to surface the intent behind it.</p>
+      </div>
+    </section>
+
+    <!-- 2. Respect Scales, Control Doesn't -->
+    <section class="comparison-section">
+      <div class="comparison-label">02 / CORPORATE MARKETING</div>
+      <div class="comparison-grid">
+        <div class="comparison-card without">
+          <div class="card-header without-header">WITHOUT</div>
+          <div class="image-placeholder">
+            <div class="placeholder-text">
+              Stock image vibes.<br>
+              Used in an ad campaign.<br><br>
+              Creator gets nothing—<br>
+              not even recognition.<br><br>
+              Legal gray zone.
+            </div>
+          </div>
+          <div class="card-content">
+            <p>A company uses an AI-generated image in their marketing. The creator—if we can even use that word—is unknown. There's no attribution, no acknowledgment, no way to trace the creative origin. Enforcement would require lawyers, courts, jurisdiction, money, time.</p>
+          </div>
+        </div>
+        <div class="comparison-card with-arr">
+          <div class="card-header with-header">
+            <span class="arr-badge-mini">&#9398;&#9415;&#9415;</span> WITH ARR
+          </div>
+          <div class="image-placeholder">
+            <div class="attestation-preview">
+              <span class="comment">// Platform displays badge</span><br><br>
+              <span class="key">status:</span> <span class="value">ATTESTED</span><br>
+              <span class="key">creator:</span> <span class="value">@designer.eth</span><br>
+              <span class="key">license:</span> <span class="value">CC-BY-4.0</span><br><br>
+              <span class="comment">// Social proof of attribution</span>
+            </div>
+          </div>
+          <div class="card-content">
+            <p>The platform displays the attestation badge. The creator's profile is linked. Users can see the attribution at a glance. No lawyers required—just visibility. Social pressure does the rest.</p>
+          </div>
+        </div>
+      </div>
+      <div class="thesis-statement">
+        <div class="thesis-title">RESPECT SCALES, CONTROL DOESN'T</div>
+        <p>Courts require lawyers, jurisdiction, money, time. Respect requires only visibility. When platforms surface attribution, social pressure does what legal enforcement never could—at internet scale.</p>
+      </div>
+    </section>
+
+    <!-- 3. The Right to Disappear -->
+    <section class="comparison-section">
+      <div class="comparison-label">03 / AI-GENERATED MUSIC</div>
+      <div class="comparison-grid">
+        <div class="comparison-card without">
+          <div class="card-header without-header">WITHOUT</div>
+          <div class="image-placeholder">
+            <div class="placeholder-text">
+              Track lives forever.<br><br>
+              Remixed, reuploaded,<br>
+              stripped of context.<br><br>
+              Creator loses control<br>
+              the moment they share.
+            </div>
+          </div>
+          <div class="card-content">
+            <p>An AI-generated track is released. It gets remixed, sampled, reuploaded. The creator's connection to the work becomes tenuous, then invisible. The internet never forgets—even when you wish it would.</p>
+          </div>
+        </div>
+        <div class="comparison-card with-arr">
+          <div class="card-header with-header">
+            <span class="arr-badge-mini">&#9398;&#9415;&#9415;</span> WITH ARR
+          </div>
+          <div class="image-placeholder">
+            <div class="attestation-preview">
+              <span class="key">created:</span> <span class="value">2026-01-15</span><br>
+              <span class="key">expires:</span> <span class="value">2031-01-15</span><br>
+              <span class="key">revocable:</span> <span class="value">true</span><br><br>
+              <span class="comment">// Creator can revoke anytime</span><br>
+              <span class="comment">// The work carries its own limits</span>
+            </div>
+          </div>
+          <div class="card-content">
+            <p>The attestation expires in 2031. The creator can revoke anytime. The work carries its own memory—and its own limits. Attribution is not a life sentence.</p>
+          </div>
+        </div>
+      </div>
+      <div class="thesis-statement">
+        <div class="thesis-title">THE RIGHT TO DISAPPEAR</div>
+        <p>Nothing is permanent without renewal. We build for memory, not surveillance. Creators can change their minds. That's not a bug—it's a right.</p>
+      </div>
+    </section>
+
+    <!-- 4. Infrastructure Must Be Free -->
+    <section class="comparison-section">
+      <div class="comparison-label">04 / OPEN SOURCE GENERATION</div>
+      <div class="comparison-grid">
+        <div class="comparison-card without">
+          <div class="card-header without-header">WITHOUT</div>
+          <div class="image-placeholder">
+            <div class="placeholder-text">
+              Every platform invents<br>
+              its own attribution system.<br><br>
+              Walled gardens.<br>
+              Incompatible formats.<br>
+              Fragmentation.
+            </div>
+          </div>
+          <div class="card-content">
+            <p>Midjourney has one system. DALL-E has another. Stable Diffusion communities invent their own. None of them talk to each other. Attribution becomes platform-dependent—which means it's not really attribution at all.</p>
+          </div>
+        </div>
+        <div class="comparison-card with-arr">
+          <div class="card-header with-header">
+            <span class="arr-badge-mini">&#9398;&#9415;&#9415;</span> WITH ARR
+          </div>
+          <div class="image-placeholder">
+            <div class="attestation-preview">
+              <span class="key">version:</span> <span class="value">"arr/0.1"</span><br><br>
+              <span class="comment">// One protocol</span><br>
+              <span class="comment">// Embedded in the file</span><br>
+              <span class="comment">// Works everywhere</span><br><br>
+              <span class="key">tool:</span> <span class="value">stable-diffusion/xl</span>
+            </div>
+          </div>
+          <div class="card-content">
+            <p>One protocol. Embedded in the file itself. Works with Midjourney, Stable Diffusion, DALL-E, your own fine-tuned model. The attestation travels with the work, not the platform.</p>
+          </div>
+        </div>
+      </div>
+      <div class="thesis-statement">
+        <div class="thesis-title">INFRASTRUCTURE MUST BE FREE</div>
+        <p>QR codes were invented in 1994. Denso Wave gave them away—no licensing fees, no control. If they'd charged, we'd have 50 incompatible formats. ARR charges nothing. Belongs to everyone. That's the only way standards win.</p>
+      </div>
+    </section>
+
+    <!-- 5. Absence is Valid -->
+    <section class="comparison-section">
+      <div class="comparison-label">05 / AI-ASSISTED WRITING</div>
+      <div class="comparison-grid">
+        <div class="comparison-card without">
+          <div class="card-header without-header">WITHOUT</div>
+          <div class="image-placeholder">
+            <div class="placeholder-text">
+              Suspicion.<br>
+              AI detection tools.<br><br>
+              "Did you write this<br>
+              or did ChatGPT?"<br><br>
+              Gatekeeping dressed<br>
+              as authenticity.
+            </div>
+          </div>
+          <div class="card-content">
+            <p>Every piece of writing is suspect. Detection tools proliferate—and fail. The question "did AI write this?" becomes a weapon, not a query. Authenticity becomes a gatekeeping mechanism.</p>
+          </div>
+        </div>
+        <div class="comparison-card with-arr">
+          <div class="card-header with-header">
+            <span class="arr-badge-mini">&#9398;&#9415;&#9415;</span> WITH ARR
+          </div>
+          <div class="image-placeholder">
+            <div class="attestation-preview">
+              <span class="comment">// No attestation present</span><br><br>
+              <span class="key">status:</span> <span class="value">NONE</span><br><br>
+              <span class="comment">// This is valid.</span><br>
+              <span class="comment">// No attestation required.</span><br>
+              <span class="comment">// The choice belongs to the creator.</span>
+            </div>
+          </div>
+          <div class="card-content">
+            <p>No attestation required. Work without ARR deserves equal respect. The choice to attest—or not—belongs to the creator alone. Platforms that require ARR for access violate everything we stand for.</p>
+          </div>
+        </div>
+      </div>
+      <div class="thesis-statement">
+        <div class="thesis-title">ABSENCE IS VALID</div>
+        <p>ARR is an invitation, never a requirement. Any platform that mandates ARR for access violates everything we stand for. Absence is not guilt. Silence is not confession.</p>
+      </div>
+    </section>
+
+    <!-- Closing -->
+    <div class="closing">
+      <p>This is not a product.</p>
+      <p>This is not a company.</p>
+      <p>This is a thesis—implemented as infrastructure.</p>
+      <p>The moment will arrive. The protocol will be ready.</p>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 ALL RIGHTS RESPECTED</p>
+    <div style="margin-top: 1rem;">
+      <a href="index.html">HOME</a>
+      <a href="spec.html">SPEC</a>
+      <a href="sdk.html">SDK</a>
+      <a href="platforms.html">PLATFORMS</a>
+    </div>
+  </footer>
+</body>
+</html>
