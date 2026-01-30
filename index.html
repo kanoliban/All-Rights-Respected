@@ -634,9 +634,12 @@
         padding-left: 0;
       }
 
-      .origin-bridge-grid {
-        grid-template-columns: 1fr !important;
-        gap: 3rem !important;
+      .bridge-section {
+        align-items: flex-start !important;
+      }
+
+      .bridge-section > div {
+        max-width: 100% !important;
       }
     }
   </style>
@@ -695,93 +698,88 @@
       </div>
     </section>
 
-    <!-- Origin + Bridge: Two-column snake layout -->
-    <section style="border-top: 1px solid var(--border);">
-      <div class="origin-bridge-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start;">
+    <!-- Origin of © (LEFT-ALIGNED) -->
+    <section class="origin-section" style="border-top: 1px solid var(--border);">
+      <div class="section-header">THE ORIGIN OF ©</div>
 
-        <!-- LEFT COLUMN: Origin of © -->
-        <div>
-          <div class="section-header">THE ORIGIN OF ©</div>
+      <h2 style="margin-bottom: 1.5rem;">In 1886, authors had a problem.</h2>
 
-          <h2 style="margin-bottom: 1.5rem;">In 1886, authors had a problem.</h2>
+      <p style="color: var(--muted); font-size: 1.1rem; line-height: 1.8; max-width: 700px; margin-bottom: 1.5rem;">A book published in London could be pirated and sold in Paris with no recourse. The <strong style="color: var(--fg);">Berne Convention</strong> was born&mdash;the first international agreement to protect creative works across borders.</p>
 
-          <p style="color: var(--muted); font-size: 1.05rem; line-height: 1.8; margin-bottom: 1.5rem;">A book published in London could be pirated and sold in Paris with no recourse. The <strong style="color: var(--fg);">Berne Convention</strong> was born&mdash;the first international agreement to protect creative works across borders.</p>
+      <p style="color: var(--muted); font-size: 1.1rem; line-height: 1.8; max-width: 700px; margin-bottom: 2rem;">For over a century, <strong style="color: var(--fg);">"All Rights Reserved"</strong> was the universal signal:</p>
 
-          <p style="color: var(--muted); font-size: 1.05rem; line-height: 1.8; margin-bottom: 2rem;">For over a century, <strong style="color: var(--fg);">"All Rights Reserved"</strong> was the universal signal:</p>
+      <p style="color: var(--fg); font-size: 1.5rem; font-style: italic; margin-bottom: 2rem; max-width: 700px;">I made this. I own this.</p>
 
-          <p style="color: var(--fg); font-size: 1.4rem; font-style: italic; margin-bottom: 2rem;">I made this. I own this.</p>
+      <p style="color: var(--muted); font-size: 1.1rem; line-height: 1.8; max-width: 700px; margin-bottom: 1.5rem;">It worked because the world was built on scarcity:</p>
 
-          <p style="color: var(--muted); font-size: 1.05rem; line-height: 1.8; margin-bottom: 1.5rem;">It worked because the world was built on scarcity:</p>
+      <ul style="color: var(--muted); font-size: 1.05rem; line-height: 2.2; max-width: 700px; margin-bottom: 0; list-style: none; padding-left: 0;">
+        <li style="padding-left: 1.5rem; position: relative;"><span style="position: absolute; left: 0; color: var(--accent);">—</span> Copying required effort</li>
+        <li style="padding-left: 1.5rem; position: relative;"><span style="position: absolute; left: 0; color: var(--accent);">—</span> Distribution required infrastructure</li>
+        <li style="padding-left: 1.5rem; position: relative;"><span style="position: absolute; left: 0; color: var(--accent);">—</span> Authorship was obvious</li>
+        <li style="padding-left: 1.5rem; position: relative;"><span style="position: absolute; left: 0; color: var(--accent);">—</span> One creator, one work, one claim</li>
+      </ul>
+    </section>
 
-          <ul style="color: var(--muted); font-size: 1rem; line-height: 2.2; list-style: none; padding-left: 0;">
-            <li style="padding-left: 1.5rem; position: relative;"><span style="position: absolute; left: 0; color: var(--accent);">—</span> Copying required effort</li>
-            <li style="padding-left: 1.5rem; position: relative;"><span style="position: absolute; left: 0; color: var(--accent);">—</span> Distribution required infrastructure</li>
-            <li style="padding-left: 1.5rem; position: relative;"><span style="position: absolute; left: 0; color: var(--accent);">—</span> Authorship was obvious</li>
-            <li style="padding-left: 1.5rem; position: relative;"><span style="position: absolute; left: 0; color: var(--accent);">—</span> One creator, one work, one claim</li>
-          </ul>
-        </div>
+    <!-- Bridge: From © to ARR (RIGHT-ALIGNED) -->
+    <section class="bridge-section" style="border-top: 1px solid var(--border); display: flex; flex-direction: column; align-items: flex-end;">
+      <div style="max-width: 700px;">
+        <div class="section-header" style="text-align: right;">FROM © TO Ⓐ Ⓡ Ⓡ</div>
 
-        <!-- RIGHT COLUMN: Bridge / From © to ARR -->
-        <div>
-          <div class="section-header">FROM © TO Ⓐ Ⓡ Ⓡ</div>
+        <h2 style="margin-bottom: 1.5rem; text-align: right;">Then AI arrived.</h2>
 
-          <h2 style="margin-bottom: 1.5rem;">Then AI arrived.</h2>
+        <p style="color: var(--muted); font-size: 1.1rem; line-height: 1.8; margin-bottom: 1.5rem; text-align: right;">Now anyone generates images, text, music in seconds. Training data includes millions of works. Ownership is contested. Courts are confused.</p>
 
-          <p style="color: var(--muted); font-size: 1.05rem; line-height: 1.8; margin-bottom: 1.5rem;">Now anyone generates images, text, music in seconds. Training data includes millions of works. Ownership is contested. Courts are confused.</p>
+        <p style="color: var(--muted); font-size: 1.1rem; line-height: 1.8; margin-bottom: 2rem; text-align: right;">The assumptions that made © work&mdash;scarcity, clear authorship, physical copies&mdash;no longer hold.</p>
 
-          <p style="color: var(--muted); font-size: 1.05rem; line-height: 1.8; margin-bottom: 2rem;">The assumptions that made © work&mdash;scarcity, clear authorship, physical copies&mdash;no longer hold.</p>
+        <p style="color: var(--fg); font-size: 1.25rem; margin-bottom: 2.5rem; text-align: right;">Introducing <strong>All Rights Respected</strong>&mdash;the evolution.</p>
 
-          <p style="color: var(--fg); font-size: 1.2rem; margin-bottom: 2.5rem;">Introducing <strong>All Rights Respected</strong>&mdash;the evolution.</p>
+        <!-- Word-by-word breakdown -->
+        <div style="margin-bottom: 3rem;">
+          <p style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 1.5rem; text-align: right;">ONE WORD. ONE PARADIGM.</p>
 
-          <!-- Word-by-word breakdown -->
-          <div style="margin-bottom: 2.5rem;">
-            <p style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 1.5rem;">ONE WORD. ONE PARADIGM.</p>
-
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 1.5rem;">
-              <!-- Row 1: Reserved -->
-              <div style="background: var(--bg); padding: 1rem; text-align: center;">
-                <div style="font-size: 1.25rem; font-weight: 500; margin-bottom: 0.5rem; opacity: 0.5;">ALL</div>
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted);">universal scope</div>
-              </div>
-              <div style="background: var(--bg); padding: 1rem; text-align: center;">
-                <div style="font-size: 1.25rem; font-weight: 500; margin-bottom: 0.5rem; opacity: 0.5;">RIGHTS</div>
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted);">creative claim</div>
-              </div>
-              <div style="background: var(--bg); padding: 1rem; text-align: center; opacity: 0.5;">
-                <div style="font-size: 1.25rem; font-weight: 500; margin-bottom: 0.5rem; text-decoration: line-through; color: var(--muted);">RESERVED</div>
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted);">legal control</div>
-              </div>
-              <!-- Row 2: Respected -->
-              <div style="background: var(--bg); padding: 1rem; text-align: center; border-top: 1px solid var(--border);">
-                <div style="font-size: 1.25rem; font-weight: 500; margin-bottom: 0.5rem; opacity: 0.5;">ALL</div>
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted);">universal scope</div>
-              </div>
-              <div style="background: var(--bg); padding: 1rem; text-align: center; border-top: 1px solid var(--border);">
-                <div style="font-size: 1.25rem; font-weight: 500; margin-bottom: 0.5rem; opacity: 0.5;">RIGHTS</div>
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted);">creative claim</div>
-              </div>
-              <div style="background: var(--bg); padding: 1rem; text-align: center; border-top: 1px solid var(--border); border-left: 2px solid var(--accent);">
-                <div style="font-size: 1.25rem; font-weight: 500; margin-bottom: 0.5rem; color: var(--accent);">RESPECTED</div>
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--accent);">social acknowledgment</div>
-              </div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); max-width: 500px; margin-bottom: 2rem; margin-left: auto;">
+            <!-- Row 1: Reserved -->
+            <div style="background: var(--bg); padding: 1.25rem; text-align: center;">
+              <div style="font-size: 1.5rem; font-weight: 500; margin-bottom: 0.5rem; opacity: 0.5;">ALL</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted);">universal scope</div>
             </div>
-
-            <div style="border-left: 2px solid var(--accent); padding-left: 1.5rem;">
-              <p style="font-size: 1.05rem; font-style: italic; color: var(--fg); margin: 0;">The foundation of human creativity isn't monetary&mdash;it's respect.</p>
+            <div style="background: var(--bg); padding: 1.25rem; text-align: center;">
+              <div style="font-size: 1.5rem; font-weight: 500; margin-bottom: 0.5rem; opacity: 0.5;">RIGHTS</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted);">creative claim</div>
+            </div>
+            <div style="background: var(--bg); padding: 1.25rem; text-align: center; opacity: 0.5;">
+              <div style="font-size: 1.5rem; font-weight: 500; margin-bottom: 0.5rem; text-decoration: line-through; color: var(--muted);">RESERVED</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted);">legal control</div>
+            </div>
+            <!-- Row 2: Respected -->
+            <div style="background: var(--bg); padding: 1.25rem; text-align: center; border-top: 1px solid var(--border);">
+              <div style="font-size: 1.5rem; font-weight: 500; margin-bottom: 0.5rem; opacity: 0.5;">ALL</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted);">universal scope</div>
+            </div>
+            <div style="background: var(--bg); padding: 1.25rem; text-align: center; border-top: 1px solid var(--border);">
+              <div style="font-size: 1.5rem; font-weight: 500; margin-bottom: 0.5rem; opacity: 0.5;">RIGHTS</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted);">creative claim</div>
+            </div>
+            <div style="background: var(--bg); padding: 1.25rem; text-align: center; border-top: 1px solid var(--border); border-left: 2px solid var(--accent);">
+              <div style="font-size: 1.5rem; font-weight: 500; margin-bottom: 0.5rem; color: var(--accent);">RESPECTED</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--accent);">social acknowledgment</div>
             </div>
           </div>
 
-          <p style="color: var(--muted); font-size: 1.05rem; line-height: 1.8; margin-bottom: 2rem;">Not a replacement for copyright&mdash;a complement. A lightweight attestation that travels with the work and answers what matters:</p>
-
-          <ul style="color: var(--muted); font-size: 1rem; line-height: 2; list-style: none; padding-left: 0; margin-bottom: 2rem;">
-            <li style="padding-left: 1.5rem; position: relative;"><span style="position: absolute; left: 0; color: var(--accent);">—</span> Who directed this creation?</li>
-            <li style="padding-left: 1.5rem; position: relative;"><span style="position: absolute; left: 0; color: var(--accent);">—</span> What tools were used?</li>
-            <li style="padding-left: 1.5rem; position: relative;"><span style="position: absolute; left: 0; color: var(--accent);">—</span> What was the intent?</li>
-          </ul>
-
-          <p style="color: var(--fg); font-size: 1rem; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.02em;">No lawyers. No registries. Just mutual respect.</p>
+          <div style="border-right: 2px solid var(--accent); padding-right: 1.5rem; margin-left: auto; max-width: 500px;">
+            <p style="font-size: 1.1rem; font-style: italic; color: var(--fg); margin: 0; text-align: right;">The foundation of human creativity isn't monetary&mdash;it's respect.</p>
+          </div>
         </div>
 
+        <p style="color: var(--muted); font-size: 1.1rem; line-height: 1.8; margin-bottom: 2rem; text-align: right;">Not a replacement for copyright&mdash;a complement. A lightweight attestation that travels with the work and answers what matters:</p>
+
+        <ul style="color: var(--muted); font-size: 1.05rem; line-height: 2; margin-bottom: 2rem; list-style: none; padding-left: 0; text-align: right;">
+          <li style="padding-right: 1.5rem; position: relative;">Who directed this creation? <span style="position: absolute; right: 0; color: var(--accent);">—</span></li>
+          <li style="padding-right: 1.5rem; position: relative;">What tools were used? <span style="position: absolute; right: 0; color: var(--accent);">—</span></li>
+          <li style="padding-right: 1.5rem; position: relative;">What was the intent? <span style="position: absolute; right: 0; color: var(--accent);">—</span></li>
+        </ul>
+
+        <p style="color: var(--fg); font-size: 1.1rem; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.02em; text-align: right;">No lawyers. No registries. Just mutual respect.</p>
       </div>
     </section>
 
