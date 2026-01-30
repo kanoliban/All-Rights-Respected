@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>For Platforms — All Rights Respected</title>
-  <meta name="description" content="Integrate ARR attestations into your platform. Detect, display, and honor creator attribution with the open protocol.">
+  <title>For Creators — All Rights Respected</title>
+  <meta name="description" content="Start attesting your creative work with ARR. Claim your creative intent in the age of AI.">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -262,20 +262,20 @@
       margin: 0;
     }
 
-    /* Principles */
-    .principle-grid {
+    /* Options grid */
+    .options-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 1.5rem;
       margin: 2rem 0;
     }
 
-    .principle-card {
+    .option-card {
       border: 1px solid var(--border);
       padding: 1.5rem;
     }
 
-    .principle-card h3 {
+    .option-card h3 {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.8rem;
       color: var(--accent);
@@ -284,43 +284,108 @@
       margin-top: 0;
     }
 
-    .principle-card p {
+    .option-card p {
       font-size: 0.95rem;
       color: var(--muted);
       margin: 0;
     }
 
-    /* Badge display example */
-    .badge-example {
-      background: #0f0f0d;
-      border: 1px solid var(--border);
-      padding: 2rem;
-      margin: 1.5rem 0;
-      text-align: center;
+    .option-card.coming-soon {
+      opacity: 0.6;
     }
 
-    .arr-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--bg);
-      border: 1px solid var(--accent);
-      padding: 0.5rem 1rem;
+    .coming-soon-badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 0.15rem 0.35rem;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+
+    /* Privacy grid */
+    .privacy-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+
+    .privacy-card {
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+    }
+
+    .privacy-card h3 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--fg);
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      margin-top: 0;
+    }
+
+    .privacy-card .example {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.75rem;
-      letter-spacing: 0.05em;
       color: var(--accent);
+      margin-bottom: 0.75rem;
+      word-break: break-all;
     }
 
-    .arr-badge-symbol {
-      font-size: 1rem;
-    }
-
-    .badge-caption {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.7rem;
+    .privacy-card p {
+      font-size: 0.9rem;
       color: var(--muted);
-      margin-top: 1rem;
+      margin: 0;
+    }
+
+    /* What to include */
+    .include-list {
+      margin: 2rem 0;
+    }
+
+    .include-item {
+      display: flex;
+      gap: 1.5rem;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .include-item:first-child {
+      border-top: 1px solid var(--border);
+    }
+
+    .include-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      min-width: 140px;
+    }
+
+    .include-label.required::after {
+      content: ' *';
+      color: var(--red);
+    }
+
+    .include-content {
+      flex: 1;
+    }
+
+    .include-content p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .include-content .note {
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 0.5rem;
     }
 
     /* Note */
@@ -341,15 +406,6 @@
 
     .note p {
       margin: 0;
-    }
-
-    .warning {
-      border-left-color: var(--red);
-      background: rgba(168, 84, 84, 0.05);
-    }
-
-    .warning .note-title {
-      color: var(--red);
     }
 
     /* Buttons */
@@ -445,12 +501,19 @@
         font-size: 2rem;
       }
 
-      .feature-grid {
+      .feature-grid,
+      .options-grid,
+      .privacy-grid {
         grid-template-columns: 1fr;
       }
 
-      .principle-grid {
-        grid-template-columns: 1fr;
+      .include-item {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .include-label {
+        min-width: auto;
       }
     }
   </style>
@@ -479,171 +542,177 @@
     </a>
     <nav>
       <a href="index.html">Home</a>
-      <a href="creators.html">Creators</a>
       <a href="spec.html">Developers</a>
       <a href="sdk.html">SDK</a>
       <a href="thesis.html">Thesis</a>
+      <a href="platforms.html">Platforms</a>
     </nav>
     <div class="mobile-wordmark">ALL RIGHTS RESPECTED</div>
   </header>
 
   <main>
     <div class="title-block">
-      <span class="page-badge">FOR PLATFORMS</span>
-      <h1>Integrate ARR</h1>
-      <p class="subtitle">Detect, display, and honor creative attribution on your platform</p>
+      <span class="page-badge">FOR CREATORS</span>
+      <h1>Start Attesting</h1>
+      <p class="subtitle">Claim your creative intent with ARR</p>
     </div>
 
     <section>
-      <h2>Why Integrate ARR?</h2>
-      <p>As AI-generated content becomes ubiquitous, users and creators alike want clarity about what they're seeing. ARR provides a standard way to surface creative intent and attribution without requiring complex legal frameworks.</p>
+      <h2>Why Attest?</h2>
+      <p>In the age of AI, proving you made something is harder than ever. ARR gives you a way to claim your creative intent&mdash;not for legal enforcement, but for social recognition.</p>
 
       <div class="feature-grid">
         <div class="feature-card">
-          <h3>BUILD TRUST</h3>
-          <p>Show users that your platform respects creator attribution. Transparency builds loyalty.</p>
+          <h3>OWNERSHIP</h3>
+          <p>Establish your creative claim. Intent is authorship in the age of AI.</p>
         </div>
         <div class="feature-card">
-          <h3>ZERO COST</h3>
-          <p>No licensing fees, no API keys, no accounts. ARR is infrastructure, not a product.</p>
+          <h3>TRANSPARENCY</h3>
+          <p>Show what tools you used. Honesty builds trust.</p>
         </div>
         <div class="feature-card">
-          <h3>FUTURE-PROOF</h3>
-          <p>As regulations evolve, platforms with attribution infrastructure will be better positioned.</p>
+          <h3>PORTABILITY</h3>
+          <p>Your attestation travels with your work. No platform lock-in.</p>
         </div>
       </div>
     </section>
 
     <section>
-      <h2>Integration Levels</h2>
+      <h2>What to Include</h2>
+      <p>An attestation captures the essential context of your creative act. Here's what you can include:</p>
 
-      <h3>Level 1: Detection &amp; Display</h3>
-      <p>The simplest integration. When content is uploaded or displayed, check for an ARR attestation and show a badge if present.</p>
-
-      <pre><code><span class="keyword">import</span> { extractAttestation, verifyAttestation } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
-
-<span class="comment">// On file upload or display</span>
-<span class="keyword">async function</span> <span class="function">checkAttestation</span>(fileBuffer) {
-  <span class="keyword">const</span> signed = <span class="keyword">await</span> <span class="function">extractAttestation</span>(fileBuffer);
-
-  <span class="keyword">if</span> (!signed) {
-    <span class="keyword">return</span> { hasAttestation: <span class="bool">false</span> };
-  }
-
-  <span class="keyword">const</span> result = <span class="keyword">await</span> <span class="function">verifyAttestation</span>(signed);
-
-  <span class="keyword">return</span> {
-    hasAttestation: <span class="bool">true</span>,
-    valid: result.valid,
-    expired: result.expired,
-    attestation: signed.attestation
-  };
-}</code></pre>
-
-      <div class="badge-example">
-        <div class="arr-badge">
-          <span class="arr-badge-symbol">&#9398;</span><span class="arr-badge-symbol">&#9415;</span><span class="arr-badge-symbol">&#9415;</span>
-          <span>ATTESTED</span>
+      <div class="include-list">
+        <div class="include-item">
+          <div class="include-label required">CREATOR</div>
+          <div class="include-content">
+            <p>Your identifier. Can be a URL, a hash, or a public key. See privacy options below.</p>
+          </div>
         </div>
-        <div class="badge-caption">Example badge for verified attestation</div>
-      </div>
-
-      <h3>Level 2: Attestation Creation</h3>
-      <p>Allow creators to add attestations when uploading content. Provide a simple UI for entering intent and generating signed attestations.</p>
-
-      <pre><code><span class="keyword">import</span> { createAttestation, signAttestation } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
-
-<span class="comment">// On upload, if user opts in</span>
-<span class="keyword">async function</span> <span class="function">addAttestation</span>(file, userIntent, userPrivateKey) {
-  <span class="keyword">const</span> attestation = <span class="function">createAttestation</span>({
-    creator: <span class="string">`https://yourplatform.com/users/${userId}`</span>,
-    intent: userIntent,
-    tool: <span class="string">'manual-upload'</span>
-  });
-
-  <span class="keyword">const</span> signed = <span class="keyword">await</span> <span class="function">signAttestation</span>(attestation, userPrivateKey);
-  <span class="keyword">const</span> embeddedFile = <span class="keyword">await</span> <span class="function">embedAttestation</span>(file, signed);
-
-  <span class="keyword">return</span> embeddedFile;
-}</code></pre>
-
-      <h3>Level 3: Full Integration</h3>
-      <p>Complete ARR support including key management, revocation checking, and upstream attribution chains.</p>
-
-      <ul>
-        <li>User key generation and secure storage</li>
-        <li>Periodic revocation list checking</li>
-        <li>Upstream attestation traversal and display</li>
-        <li>Attestation renewal workflows</li>
-      </ul>
-    </section>
-
-    <section>
-      <h2>Integration Principles</h2>
-
-      <div class="principle-grid">
-        <div class="principle-card">
-          <h3>NEVER REQUIRE ARR</h3>
-          <p>Content without attestations must be treated equally. Requiring ARR for upload or visibility violates the protocol's principles.</p>
+        <div class="include-item">
+          <div class="include-label">INTENT</div>
+          <div class="include-content">
+            <p>What you meant to create. A brief description of your creative vision.</p>
+            <p class="note">Example: "Album cover exploring solitude in digital spaces"</p>
+          </div>
         </div>
-        <div class="principle-card">
-          <h3>SHOW, DON'T ENFORCE</h3>
-          <p>ARR is for visibility, not gatekeeping. Display attestation information; don't use it for access control.</p>
+        <div class="include-item">
+          <div class="include-label">TOOL</div>
+          <div class="include-content">
+            <p>What you used to create it. Be specific about the tool and version.</p>
+            <p class="note">Example: "midjourney/6.1" or "stable-diffusion/xl"</p>
+          </div>
         </div>
-        <div class="principle-card">
-          <h3>RESPECT EXPIRATION</h3>
-          <p>Expired attestations should be displayed differently. Don't treat them as invalid—they're historical records.</p>
+        <div class="include-item">
+          <div class="include-label">EXPIRATION</div>
+          <div class="include-content">
+            <p>When the attestation expires. Default is 5 years. Maximum is 25 years.</p>
+            <p class="note">Nothing is permanent without renewal. You can always renew before expiration.</p>
+          </div>
         </div>
-        <div class="principle-card">
-          <h3>PRESERVE METADATA</h3>
-          <p>When processing images, preserve XMP metadata including attestations. Don't strip attribution.</p>
-        </div>
-      </div>
-
-      <div class="warning">
-        <div class="note-title">CRITICAL</div>
-        <p>Platforms that strip attestation metadata, require ARR for access, or use ARR for content filtering are violating the protocol's principles and will not be recognized as conformant implementations.</p>
       </div>
     </section>
 
     <section>
-      <h2>Display Guidelines</h2>
+      <h2>How to Attest</h2>
+      <p>Choose the method that works best for your workflow:</p>
 
-      <h3>Badge Placement</h3>
-      <p>Show attestation badges near the content, not hidden in menus. Users should see attribution status at a glance.</p>
+      <div class="options-grid">
+        <div class="option-card coming-soon">
+          <h3>ONLINE TOOL <span class="coming-soon-badge">COMING SOON</span></h3>
+          <p>Upload your file, fill in the details, download with attestation embedded. No code required.</p>
+        </div>
+        <div class="option-card">
+          <h3>CLI TOOL</h3>
+          <p>Use the command line to create and embed attestations. Best for batch processing and automation.</p>
+        </div>
+        <div class="option-card">
+          <h3>SDK</h3>
+          <p>Integrate attestation creation into your own tools and workflows using our TypeScript SDK.</p>
+        </div>
+      </div>
 
-      <h3>Status Indicators</h3>
-      <ul>
-        <li><strong>Valid</strong> — Signature verified, not expired</li>
-        <li><strong>Expired</strong> — Signature verified, past expiration date</li>
-        <li><strong>Unverified</strong> — Cannot verify signature (missing key)</li>
-        <li><strong>None</strong> — No attestation present (neutral, not negative)</li>
-      </ul>
+      <h3>Using the CLI</h3>
+      <pre><code><span class="comment"># Install the CLI</span>
+npm install -g @allrightsrespected/cli
 
-      <h3>Detail View</h3>
-      <p>On click/tap, show full attestation details: creator identifier, intent, tool used, creation date, expiration date, and license if present.</p>
+<span class="comment"># Create and embed an attestation</span>
+arr attest artwork.png \
+  --creator <span class="string">"https://yoursite.com/@you"</span> \
+  --intent <span class="string">"Poster design for climate campaign"</span> \
+  --tool <span class="string">"midjourney/6.1"</span>
+
+<span class="comment"># Verify an existing attestation</span>
+arr verify artwork.png</code></pre>
+
+      <h3>Using the SDK</h3>
+      <pre><code><span class="keyword">import</span> { createAttestation, signAttestation, embedAttestation } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
+
+<span class="comment">// Create an attestation</span>
+<span class="keyword">const</span> attestation = <span class="function">createAttestation</span>({
+  <span class="key">creator</span>: <span class="string">'https://yoursite.com/@you'</span>,
+  <span class="key">intent</span>: <span class="string">'Poster design for climate campaign'</span>,
+  <span class="key">tool</span>: <span class="string">'midjourney/6.1'</span>
+});
+
+<span class="comment">// Sign it with your private key</span>
+<span class="keyword">const</span> signed = <span class="keyword">await</span> <span class="function">signAttestation</span>(attestation, privateKey);
+
+<span class="comment">// Embed in your file</span>
+<span class="keyword">const</span> output = <span class="keyword">await</span> <span class="function">embedAttestation</span>(imageBuffer, signed);</code></pre>
+    </section>
+
+    <section>
+      <h2>Privacy Options</h2>
+      <p>You choose how much to reveal. ARR supports multiple levels of privacy:</p>
+
+      <div class="privacy-grid">
+        <div class="privacy-card">
+          <h3>IDENTIFIED</h3>
+          <div class="example">https://yoursite.com/@you</div>
+          <p>Link directly to your profile or website. Anyone can see who made this.</p>
+        </div>
+        <div class="privacy-card">
+          <h3>PSEUDONYMOUS</h3>
+          <div class="example">hash:sha256:7f3a9b2c...</div>
+          <p>Use a hash-based identifier. Linkable across works, but not to your real identity.</p>
+        </div>
+        <div class="privacy-card">
+          <h3>ANONYMOUS</h3>
+          <div class="example">pubkey:ed25519:abc123...</div>
+          <p>Use a unique key per work. Verifiable, but completely unlinkable.</p>
+        </div>
+      </div>
 
       <div class="note">
-        <div class="note-title">RECOMMENDATION</div>
-        <p>Consider adding a "Learn more about ARR" link to help users understand what attestations mean. Point to <code>allrightsrespected.com</code> or create your own explainer page.</p>
+        <div class="note-title">REMEMBER</div>
+        <p>ARR is a social protocol, not identity verification. You can attest anonymously. The signature proves control of a key, not who you are.</p>
       </div>
     </section>
 
     <section>
-      <h2>Get Started</h2>
+      <h2>Example Attestation</h2>
+      <p>Here's what a complete attestation looks like:</p>
 
-      <p>Ready to integrate? Here's how to begin:</p>
+      <pre><code>{
+  <span class="key">"attestation"</span>: {
+    <span class="key">"version"</span>: <span class="string">"arr/0.1"</span>,
+    <span class="key">"id"</span>: <span class="string">"550e8400-e29b-41d4-a716-446655440000"</span>,
+    <span class="key">"created"</span>: <span class="string">"2026-01-30T10:30:00Z"</span>,
+    <span class="key">"creator"</span>: <span class="string">"hash:sha256:7f3a9b2c4d5e6f..."</span>,
+    <span class="key">"intent"</span>: <span class="string">"Poster design for climate awareness campaign"</span>,
+    <span class="key">"tool"</span>: <span class="string">"midjourney/6.1"</span>,
+    <span class="key">"upstream"</span>: [],
+    <span class="key">"expires"</span>: <span class="string">"2031-01-30"</span>,
+    <span class="key">"revocable"</span>: <span class="bool">true</span>
+  },
+  <span class="key">"signature"</span>: <span class="string">"ed25519:kF2h9Jx3mN7pQrSt8vWxYz..."</span>
+}</code></pre>
 
-      <ol>
-        <li>Install the SDK: <code>npm install @allrightsrespected/sdk</code></li>
-        <li>Start with Level 1: detection and display</li>
-        <li>Test with the SDK to create and verify attestations locally</li>
-        <li>Gradually expand to Levels 2 and 3 based on user demand</li>
-      </ol>
+      <p>This attestation is embedded directly in the file's metadata. It travels with the work wherever it goes.</p>
 
       <div class="btn-group">
-        <a href="sdk.html" class="btn btn-primary">Read SDK Documentation</a>
-        <a href="spec.html" class="btn">View Full Specification</a>
+        <a href="spec.html" class="btn btn-primary">Read the Specification</a>
+        <a href="sdk.html" class="btn">View SDK Documentation</a>
       </div>
     </section>
   </main>
@@ -658,10 +727,10 @@
     <p>This documentation is released into the public domain under CC0.</p>
     <div style="margin-top: 1rem;">
       <a href="index.html">HOME</a>
-      <a href="creators.html">CREATORS</a>
       <a href="spec.html">DEVELOPERS</a>
       <a href="sdk.html">SDK</a>
       <a href="thesis.html">THESIS</a>
+      <a href="platforms.html">PLATFORMS</a>
     </div>
   </footer>
 </body>
