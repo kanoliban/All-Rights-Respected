@@ -112,6 +112,12 @@
       font-size: 1.25rem;
       color: var(--accent);
       letter-spacing: 0.1em;
+      display: flex;
+      gap: 0.1em;
+    }
+
+    .logo-text {
+      /* visible on desktop */
     }
 
     nav {
@@ -561,11 +567,28 @@
     /* Responsive */
     @media (max-width: 768px) {
       header {
-        padding: 1rem;
+        padding: 0.75rem 1rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .logo-text {
+        display: none;
+      }
+
+      .logo-symbol {
+        font-size: 1.1rem;
+        flex-direction: column;
+        gap: 0;
+        line-height: 1;
       }
 
       nav {
-        gap: 1rem;
+        gap: 1.5rem;
+      }
+
+      nav a {
+        font-size: 0.7rem;
       }
 
       section {
@@ -623,8 +646,8 @@
   <!-- Header -->
   <header>
     <div class="logo">
-      <span class="logo-symbol">&#9398;&#9415;&#9415;</span>
-      ALL RIGHTS RESPECTED
+      <span class="logo-symbol"><span>&#9398;</span><span>&#9415;</span><span>&#9415;</span></span>
+      <span class="logo-text">ALL RIGHTS RESPECTED</span>
     </div>
     <nav>
       <a href="#protocol">The Protocol</a>
