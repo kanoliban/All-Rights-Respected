@@ -120,26 +120,178 @@
       /* visible on desktop */
     }
 
+    /* Mobile wordmark - matches desktop logo styling */
     .mobile-wordmark {
       display: none;
+      padding: 1.5rem 1rem;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--fg);
     }
 
     nav {
       display: flex;
-      gap: 2rem;
+      flex: 1;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 0;
     }
 
     nav a {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--muted);
       text-decoration: none;
       letter-spacing: 0.05em;
       transition: color 0.2s;
+      padding: 0 0.75rem;
+      border-right: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    nav a:last-child {
+      border-right: none;
+      padding-right: 0;
+    }
+
+    nav a:first-child {
+      padding-left: 0;
     }
 
     nav a:hover {
       color: var(--fg);
+    }
+
+    nav a.active {
+      color: var(--accent);
+    }
+
+    /* Hamburger button - hidden on desktop */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 2rem;
+      height: 2rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      z-index: 101;
+    }
+
+    .hamburger span {
+      display: flex;
+      flex-direction: row;
+      gap: 3px;
+      transition: all 0.3s ease;
+    }
+
+    .hamburger span i {
+      display: block;
+      width: 4px;
+      height: 4px;
+      background: var(--fg);
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    /* Hamburger animation when open - becomes X */
+    .hamburger.open span {
+      position: relative;
+      width: 16px;
+      height: 16px;
+    }
+
+    .hamburger.open span i {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+    }
+
+    .hamburger.open span i:first-child {
+      width: 16px;
+      height: 2px;
+      border-radius: 0;
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    .hamburger.open span i:nth-child(2) {
+      opacity: 0;
+    }
+
+    .hamburger.open span i:last-child {
+      width: 16px;
+      height: 2px;
+      border-radius: 0;
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
+    /* Mobile nav overlay */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--bg);
+      z-index: 100;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 0;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .mobile-nav.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .mobile-nav a {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.1em;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border);
+      width: 100%;
+      max-width: 300px;
+      text-align: center;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .mobile-nav-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      font-size: 1.5rem;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+    }
+
+    .mobile-nav a:first-of-type {
+      border-top: 1px solid var(--border);
+    }
+
+    .mobile-nav a:hover {
+      color: var(--fg);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .mobile-nav a.active {
+      color: var(--accent);
     }
 
     /* Main content */
@@ -209,21 +361,6 @@
       max-width: 700px;
       margin: 0 auto 2rem;
       line-height: 1.6;
-    }
-
-    .status-line {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-    }
-
-    .status-line span {
-      padding: 0 0.75rem;
-    }
-
-    .status-line span:not(:last-child) {
-      border-right: 1px solid var(--border);
     }
 
     /* Section headers */
@@ -568,40 +705,115 @@
       margin-top: 1.5rem;
     }
 
+    /* Word grid - ALL RIGHTS breakdown */
+    .word-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    /* Right-aligned sections (desktop only) */
+    .align-right-desktop {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .align-right-desktop .section-header,
+    .align-right-desktop h2,
+    .align-right-desktop p,
+    .align-right-desktop ul {
+      text-align: right;
+    }
+
+    /* Status line */
+    .status-line {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem 0;
+    }
+
+    .status-line span {
+      padding: 0 0.75rem;
+    }
+
+    .status-line span:not(:last-child) {
+      border-right: 1px solid var(--border);
+    }
+
+    /* Bridge insight paragraph */
+    .bridge-insight {
+      color: var(--fg);
+      font-size: 1.15rem;
+      line-height: 1.8;
+      margin-top: 2rem;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
+      /* Word grid stacks vertically */
+      .word-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      /* Right-aligned sections become left-aligned */
+      .align-right-desktop {
+        align-items: flex-start;
+      }
+
+      .align-right-desktop .section-header,
+      .align-right-desktop h2,
+      .align-right-desktop p,
+      .align-right-desktop ul {
+        text-align: left;
+      }
+
+      /* Footer links stack */
+      .footer-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .footer-links a {
+        padding: 0;
+      }
+
+      /* Bridge insight reduced spacing */
+      .bridge-insight {
+        margin-top: 1.5rem;
+      }
       header {
         padding: 0.75rem 1rem;
         flex-wrap: wrap;
         gap: 0.5rem;
       }
 
-      .logo-text {
-        display: none;
-      }
-
       .logo-symbol {
         font-size: 1.1rem;
       }
 
-      .mobile-wordmark {
-        display: block;
-        width: 100%;
-        text-align: center;
-        font-size: 0.65rem;
-        font-weight: 600;
-        letter-spacing: 0.15em;
-        padding-top: 0.5rem;
-        border-top: 1px solid var(--border);
-        margin-top: 0.5rem;
+      .logo-text {
+        font-size: 0.85rem;
       }
 
+      /* Hide desktop nav, show hamburger */
       nav {
-        gap: 1.5rem;
+        display: none;
       }
 
-      nav a {
-        font-size: 0.7rem;
+      .hamburger {
+        display: flex;
+      }
+
+      .mobile-nav {
+        display: flex;
       }
 
       section {
@@ -634,6 +846,13 @@
         padding-left: 0;
       }
     }
+
+    /* Extra small screens */
+    @media (max-width: 480px) {
+      section {
+        padding: 2.5rem 1rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -663,14 +882,30 @@
       <span class="logo-text">ALL RIGHTS RESPECTED</span>
     </div>
     <nav>
+      <a href="index.html" class="active">Home</a>
       <a href="creators.html">Creators</a>
       <a href="spec.html">Developers</a>
+      <a href="platforms.html">Platforms</a>
       <a href="sdk.html">SDK</a>
       <a href="thesis.html">Thesis</a>
-      <a href="platforms.html">Platforms</a>
     </nav>
-    <div class="mobile-wordmark">ALL RIGHTS RESPECTED</div>
+    <button class="hamburger" aria-label="Toggle menu" onclick="toggleMenu()">
+      <span><i></i><i></i><i></i></span>
+    </button>
   </header>
+
+  <!-- Mobile Navigation Overlay -->
+  <div class="mobile-nav" id="mobileNav">
+    <div class="mobile-nav-badge">
+      <span>&#9398;</span><span>&#9415;</span><span>&#9415;</span>
+    </div>
+    <a href="index.html" class="active">Home</a>
+    <a href="creators.html">Creators</a>
+    <a href="spec.html">Developers</a>
+    <a href="platforms.html">Platforms</a>
+    <a href="sdk.html">SDK</a>
+    <a href="thesis.html">Thesis</a>
+  </div>
 
   <main>
     <!-- Hero -->
@@ -714,15 +949,24 @@
     </section>
 
     <!-- Bridge Part 1: AI Shift (RIGHT-ALIGNED) -->
-    <section style="display: flex; flex-direction: column; align-items: flex-end;">
+    <section class="align-right-desktop">
       <div style="max-width: 700px;">
-        <div class="section-header" style="text-align: right; border-bottom: none; padding-bottom: 0;">FROM © TO Ⓐ Ⓡ Ⓡ</div>
+        <div class="section-header" style="border-bottom: none; padding-bottom: 0;">FROM © TO Ⓐ Ⓡ Ⓡ</div>
 
-        <h2 style="margin-bottom: 1.5rem; text-align: right;">Then AI arrived.</h2>
+        <h2 style="margin-bottom: 1.5rem;">Then AI arrived.</h2>
 
-        <p style="color: var(--muted); font-size: 1.1rem; line-height: 1.8; margin-bottom: 1.5rem; text-align: right;">Now anyone generates images, text, music in seconds. Training data includes millions of works. Ownership is contested. Courts are confused.</p>
+        <p style="color: var(--muted); font-size: 1.1rem; line-height: 1.8; margin-bottom: 1.5rem;">Now anyone generates images, text, music in seconds. Training data includes millions of works. Ownership is contested. Courts are confused.</p>
 
-        <p style="color: var(--muted); font-size: 1.1rem; line-height: 1.8; margin-bottom: 0; text-align: right;">The assumptions that made © work&mdash;scarcity, clear authorship, physical copies&mdash;no longer hold.</p>
+        <p style="color: var(--muted); font-size: 1.1rem; line-height: 1.8; margin-bottom: 0;">The assumptions that made © work&mdash;scarcity, clear authorship, physical copies&mdash;no longer hold.</p>
+
+        <p class="bridge-insight">
+          But here's what didn't change: <strong>creators still want to be seen.</strong>
+        </p>
+
+        <p style="color: var(--muted); font-size: 1.1rem; line-height: 1.8; margin-bottom: 0;">
+          Not necessarily paid. Not necessarily protected. Just acknowledged.<br>
+          Legal enforcement requires lawyers, courts, jurisdiction. Recognition requires only visibility.
+        </p>
       </div>
     </section>
 
@@ -734,7 +978,7 @@
       <!-- Word-by-word breakdown (full width with dashed boxes) -->
       <div style="margin-bottom: 3rem;">
         <!-- Row 1: Reserved -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div class="word-grid" style="margin-bottom: 1.5rem;">
           <div style="border: 1px dashed var(--border); padding: 2rem; text-align: center;">
             <div style="font-size: 2rem; font-weight: 400; margin-bottom: 0.5rem; color: var(--muted);">ALL</div>
             <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--muted);">universal scope</div>
@@ -750,7 +994,7 @@
         </div>
 
         <!-- Row 2: Respected (highlighted) with thesis connected to RESPECTED box -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+        <div class="word-grid">
           <div style="border: 1px dashed var(--border); padding: 2rem; text-align: center;">
             <div style="font-size: 2rem; font-weight: 400; margin-bottom: 0.5rem; color: var(--muted);">ALL</div>
             <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--muted);">universal scope</div>
@@ -769,13 +1013,13 @@
     </section>
 
     <!-- Bridge Part 3: The Protocol (RIGHT-ALIGNED) -->
-    <section style="display: flex; flex-direction: column; align-items: flex-end; padding-top: 0;">
+    <section class="align-right-desktop" style="padding-top: 0;">
       <div style="max-width: 700px;">
-        <h2 style="margin-bottom: 1.5rem; text-align: right;">The foundation of human creativity<br>isn't monetary&mdash;it's respect.</h2>
+        <h2 style="margin-bottom: 1.5rem; text-wrap: balance;">The foundation of human creativity isn't monetary—it's respect.</h2>
 
-        <p style="color: var(--muted); font-size: 1.1rem; line-height: 1.8; margin-bottom: 2rem; text-align: right;">Not a replacement for copyright&mdash;a complement. A lightweight attestation that travels with the work and answers what matters:</p>
+        <p style="color: var(--muted); font-size: 1.1rem; line-height: 1.8; margin-bottom: 2rem;">Not a replacement for copyright&mdash;a complement. A lightweight attestation that travels with the work and answers what matters:</p>
 
-        <ul style="color: var(--muted); font-size: 1.05rem; line-height: 2; margin-bottom: 0; list-style: none; padding-left: 0; text-align: right;">
+        <ul style="color: var(--muted); font-size: 1.05rem; line-height: 2; margin-bottom: 0; list-style: none; padding-left: 0;">
           <li style="padding-right: 1.5rem; position: relative;">Who directed this creation? <span style="position: absolute; right: 0; color: var(--accent);">—</span></li>
           <li style="padding-right: 1.5rem; position: relative;">What tools were used? <span style="position: absolute; right: 0; color: var(--accent);">—</span></li>
           <li style="padding-right: 1.5rem; position: relative;">What was the intent? <span style="position: absolute; right: 0; color: var(--accent);">—</span></li>
@@ -1020,6 +1264,26 @@
     function toggleArticle(element) {
       element.classList.toggle('expanded');
     }
+
+    // Mobile menu toggle
+    function toggleMenu() {
+      const hamburger = document.querySelector('.hamburger');
+      const mobileNav = document.getElementById('mobileNav');
+      hamburger.classList.toggle('open');
+      mobileNav.classList.toggle('open');
+      document.body.style.overflow = mobileNav.classList.contains('open') ? 'hidden' : '';
+    }
+
+    // Close menu when clicking a link
+    document.querySelectorAll('.mobile-nav a').forEach(link => {
+      link.addEventListener('click', () => {
+        const hamburger = document.querySelector('.hamburger');
+        const mobileNav = document.getElementById('mobileNav');
+        hamburger.classList.remove('open');
+        mobileNav.classList.remove('open');
+        document.body.style.overflow = '';
+      });
+    });
   </script>
 </body>
 </html>
