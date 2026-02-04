@@ -24,6 +24,9 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Checkout
@@ -64,8 +67,6 @@ jobs:
 
       - name: Publish packages
         if: ${{ inputs.publish }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npm publish --workspace @allrightsrespected/sdk --provenance --access public --tag "${{ inputs.npm_tag }}"
           npm publish --workspace @allrightsrespected/cli --provenance --access public --tag "${{ inputs.npm_tag }}"

@@ -13,14 +13,15 @@ Define how ARR transitions from in-repo packages to installable npm distribution
 - Package names selected:
   - `@allrightsrespected/sdk`
   - `@allrightsrespected/cli`
-- Packages are now publish-ready in manifest metadata
-- npm publication is not yet executed
+- Packages are published to npm (`0.1.0`)
+- Release workflow uses Trusted Publishing (OIDC) with provenance
+- `NPM_TOKEN` is not required for releases
 
 ## Publication Gates
 
 Before first npm publish, all gates must pass:
 
-1. npm scope ownership and maintainer auth verified
+1. npm scope ownership and Trusted Publishing verified
 2. `npm run publish:validate` passes
 3. `npm run publish:preflight` passes
 4. Tag-based release selected (`vX.Y.Z`)
@@ -58,7 +59,7 @@ Rules:
 
 ## Automation
 
-Manual workflow:
+Manual workflow (OIDC):
 
 - `.github/workflows/npm-release.yml`
 
@@ -67,6 +68,7 @@ Supports:
 - preflight build/test/pack checks
 - optional publish step gated behind workflow input
 - publish-readiness validation via `scripts/assert-publish-ready.mjs`
+- no long-lived token required
 
 ## Commands
 
@@ -75,11 +77,8 @@ npm run publish:preflight
 npm run publish:validate
 ```
 
-## Scope and Ownership (Open)
+## Scope and Ownership (Resolved)
 
-Publication is blocked until npm ownership/auth is verified for the selected scope.
-
-Current blockers:
-
-- npm maintainer account is not authenticated in local environment
-- first publish must confirm scope access for `@allrightsrespected/*`
+- npm org `@allrightsrespected` is active
+- GitHub Actions is configured as a Trusted Publisher for this repo
+- Tokens should remain revoked unless a manual emergency publish is required
