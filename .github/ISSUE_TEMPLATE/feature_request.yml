@@ -1,0 +1,52 @@
+name: Feature request
+description: Propose ARR roadmap features (distribution, format support, revocation/renewal, docs).
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Feature requests should map to ARR goals and non-gatekeeping constraints.
+  - type: input
+    id: problem
+    attributes:
+      label: Problem
+      description: What user or stakeholder problem does this solve?
+      placeholder: Platform cannot verify WebP uploads without stripping metadata
+    validations:
+      required: true
+  - type: dropdown
+    id: stakeholder
+    attributes:
+      label: Primary stakeholder
+      options:
+        - Creator
+        - Platform
+        - Developer/Contributor
+        - Partner/Supporter
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe behavior, interfaces, and expected output.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope notes
+      description: In-scope and out-of-scope boundaries.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How should we verify this is complete?
+      placeholder: |
+        - build passes
+        - tests added
+        - docs synced
+    validations:
+      required: true

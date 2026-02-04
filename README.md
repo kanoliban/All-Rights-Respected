@@ -60,12 +60,16 @@ I genuinely don't know what help looks like yet. Maybe you implement it in your 
 
 All of that is useful.
 
+- [Contributing guide](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+
 ## Working docs
 
 - [Documentation map](DOCS-MAP.md)
 - [Product plan](PLAN.md)
 - [Implementation guide (M1)](docs/IMPLEMENTATION.md)
 - [Release notes (v0.1.0-m1)](docs/RELEASE-v0.1.0-m1.md)
+- [Metrics](docs/METRICS.md)
 - [Roadmap](ROADMAP.md)
 - [Funding model](FUNDING.md)
 - [Bounty framework](BOUNTIES.md)

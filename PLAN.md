@@ -22,6 +22,15 @@ M1 is shipped and tagged (`v0.1.0-m1`) with:
 
 The primary risk is now adoption and trust, not feasibility.
 
+## Progress Since v0.1.0-m1
+
+Completed:
+
+- release notes published in-repo (`docs/RELEASE-v0.1.0-m1.md`)
+- contributor operations docs (`CONTRIBUTING.md`, `SECURITY.md`)
+- GitHub issue templates and PR template added
+- baseline metrics page created (`docs/METRICS.md`)
+
 ## Stakeholders and Needs
 
 ### Creators
@@ -132,6 +141,6 @@ Success criteria:
 
 ## Immediate Priority Order
 
-1. finalize contributor operations docs and templates
-2. publish release comms for `v0.1.0-m1`
-3. choose and execute one M1.2 distribution decision (npm publication lane)
+1. add metrics section (adoption + contributor throughput) and update it on a cadence
+2. choose and execute one M1.2 distribution decision (recommended: npm publication lane)
+3. keep docs/spec/tooling in lockstep as distribution changes land

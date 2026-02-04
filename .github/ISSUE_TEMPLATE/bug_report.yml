@@ -1,0 +1,66 @@
+name: Bug report
+description: Report incorrect ARR behavior, verification errors, or parser/adapter defects.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing this bug.
+
+        Please include enough detail to reproduce.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: What is broken?
+      placeholder: verify returns valid for tampered signature
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - arr-core
+        - arr-cli
+        - PNG adapter
+        - JPEG adapter
+        - sidecar adapter
+        - docs/examples
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Commands, files, and exact sequence.
+      placeholder: |
+        1. npm run build
+        2. node packages/arr-cli/dist/index.js verify ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs/output
+      render: shell
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS + Node version
+      placeholder: macOS 15, Node 20.19.5

@@ -16,6 +16,9 @@ Last updated: 2026-02-04
 | `sdk.html` | SDK-facing documentation and examples |
 | `docs/IMPLEMENTATION.md` | M1 implementation and CLI operational guide |
 | `docs/RELEASE-v0.1.0-m1.md` | M1 release summary and operational quickstart |
+| `docs/METRICS.md` | Adoption and contributor throughput tracking |
+| `CONTRIBUTING.md` | Contributor workflow and guardrails |
+| `SECURITY.md` | Vulnerability reporting and security response policy |
 | `thesis.html` | Philosophy and framing |
 | `index.html` | Main public landing page |
 

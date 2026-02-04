@@ -1,6 +1,6 @@
 # ARR Roadmap
 
-Status: Draft execution plan  
+Status: Active execution plan  
 Last updated: 2026-02-04
 
 ## Objective
@@ -30,18 +30,32 @@ Exit criteria:
 
 Outcome: first working implementation path for creators and developers.
 
-- [ ] Implement `arr` CLI baseline:
+- [x] Implement `arr` CLI baseline:
   - `arr attest <file>`
   - `arr verify <file>`
   - `arr extract <file>`
-- [ ] Support sidecar mode (`<file>.arr`) for all formats
-- [ ] Support metadata embedding for PNG/JPEG (minimum)
-- [ ] Publish conformance test fixtures for `arr/0.1`
+- [x] Support sidecar mode (`<file>.arr`) for all formats
+- [x] Support metadata embedding for PNG/JPEG (minimum)
+- [x] Publish conformance test fixtures for `arr/0.1`
 
 Exit criteria:
 - A creator can generate and verify an attestation locally
 - Verification output includes valid/expired/invalid states
 - Demo files and fixtures are publicly reproducible
+
+## M1.1 - Adoption readiness (Weeks 4-6)
+
+Outcome: contributors and early integrators can adopt ARR without maintainers as a bottleneck.
+
+- [x] Add release notes for `v0.1.0-m1`
+- [x] Add implementation runbook (`docs/IMPLEMENTATION.md`)
+- [x] Add product plan and sequencing rationale (`PLAN.md`)
+- [x] Add contributor/security/PR-issue templates
+- [x] Add metrics section tracking integrations and contributor throughput
+
+Exit criteria:
+- External contributor can submit a PR using project templates and docs
+- Early adopter can run ARR CLI and understand supported scope without private guidance
 
 ## M2 - JS SDK baseline (Weeks 4-8)
 
