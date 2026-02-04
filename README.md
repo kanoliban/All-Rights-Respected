@@ -64,6 +64,7 @@ All of that is useful.
 
 - [Documentation map](DOCS-MAP.md)
 - [Implementation guide (M1)](docs/IMPLEMENTATION.md)
+- [Release notes (v0.1.0-m1)](docs/RELEASE-v0.1.0-m1.md)
 - [Roadmap](ROADMAP.md)
 - [Funding model](FUNDING.md)
 - [Bounty framework](BOUNTIES.md)

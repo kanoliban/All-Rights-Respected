@@ -14,6 +14,7 @@ Last updated: 2026-02-04
 | `platforms.html` | Platform integration guidance |
 | `sdk.html` | SDK-facing documentation and examples |
 | `docs/IMPLEMENTATION.md` | M1 implementation and CLI operational guide |
+| `docs/RELEASE-v0.1.0-m1.md` | M1 release summary and operational quickstart |
 | `thesis.html` | Philosophy and framing |
 | `index.html` | Main public landing page |
 
