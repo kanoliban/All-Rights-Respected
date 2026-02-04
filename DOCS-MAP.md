@@ -8,6 +8,7 @@ Last updated: 2026-02-04
 | File | Role |
 |---|---|
 | `README.md` | Project narrative and high-level entry point |
+| `PLAN.md` | Product strategy and stakeholder-focused sequencing |
 | `SPEC.md` | Canonical protocol text (`arr/0.1`) |
 | `spec.html` | Rendered spec page for the website (must mirror `SPEC.md`) |
 | `creators.html` | Creator-facing onboarding docs |
