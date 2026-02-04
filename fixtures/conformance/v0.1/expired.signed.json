@@ -1,0 +1,18 @@
+{
+  "attestation": {
+    "version": "arr/0.1",
+    "id": "0f8fad5b-d9cb-469f-a165-70867728950e",
+    "created": "2020-01-01T00:00:00Z",
+    "creator": "pubkey:ed25519:QaOE8N2X-v6TWHCHSmrrn3YOxQM6INtnuqdJBNUAGGs",
+    "intent": "Poster design for climate awareness campaign",
+    "tool": "arr-cli/0.1.0",
+    "upstream": [],
+    "expires": "2021-01-01",
+    "revocable": true,
+    "license": "CC-BY-4.0",
+    "extensions": {
+      "confidence": 0.91
+    }
+  },
+  "signature": "ed25519:DkLErRFM23w1AE8knisQc6GLqiCcaOqro0AweoItnOYlAHY8nntK2LUc7TrsS4ALrrXDlvzqxJJARtyQBjwoBQ"
+}

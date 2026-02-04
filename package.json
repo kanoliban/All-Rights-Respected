@@ -1,0 +1,21 @@
+{
+  "name": "all-rights-respected",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace @arr/internal-core && npm run build --workspace @arr/internal-cli",
+    "test": "npm run build && vitest run",
+    "test:unit": "vitest run packages/arr-core/test",
+    "test:integration": "npm run build && vitest run tests",
+    "arr": "node packages/arr-cli/dist/index.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
