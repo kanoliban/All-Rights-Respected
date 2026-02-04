@@ -67,5 +67,5 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          npm publish --workspace @arr/internal-core --provenance --access public --tag "${{ inputs.npm_tag }}"
-          npm publish --workspace @arr/internal-cli --provenance --access public --tag "${{ inputs.npm_tag }}"
+          npm publish --workspace @allrightsrespected/sdk --provenance --access public --tag "${{ inputs.npm_tag }}"
+          npm publish --workspace @allrightsrespected/cli --provenance --access public --tag "${{ inputs.npm_tag }}"

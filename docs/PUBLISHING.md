@@ -10,15 +10,18 @@ Define how ARR transitions from in-repo packages to installable npm distribution
 ## Current State
 
 - Implementation shipped in-repo (`v0.1.0-m1`)
-- Workspace packages are intentionally internal-named and private
+- Package names selected:
+  - `@allrightsrespected/sdk`
+  - `@allrightsrespected/cli`
+- Packages are now publish-ready in manifest metadata
 - npm publication is not yet executed
 
 ## Publication Gates
 
 Before first npm publish, all gates must pass:
 
-1. Package naming decision finalized (public names, scope, ownership)
-2. `packages/arr-core/package.json` and `packages/arr-cli/package.json` set to publishable metadata
+1. npm scope ownership and maintainer auth verified
+2. `npm run publish:validate` passes
 3. `npm run publish:preflight` passes
 4. Tag-based release selected (`vX.Y.Z`)
 5. CI green on release commit/tag
@@ -72,11 +75,11 @@ npm run publish:preflight
 npm run publish:validate
 ```
 
-## Naming Decision (Open)
+## Scope and Ownership (Open)
 
-Publication is blocked until final public package names are chosen.
+Publication is blocked until npm ownership/auth is verified for the selected scope.
 
-Current policy:
+Current blockers:
 
-- keep internal names/private flags until naming is approved
-- do not publish internal-named packages
+- npm maintainer account is not authenticated in local environment
+- first publish must confirm scope access for `@allrightsrespected/*`

@@ -9,13 +9,13 @@ This release introduces the first executable ARR reference implementation in thi
 ## Included
 
 - TypeScript/Node workspace for ARR implementation
-- `@arr/internal-core` protocol library
+- `@allrightsrespected/sdk` protocol library
   - canonicalization
   - Ed25519 key generation/signing/verification
   - sidecar read/write
   - PNG (iTXt) metadata embed/extract
   - JPEG (XMP APP1) metadata embed/extract
-- `@arr/internal-cli` command-line interface
+- `@allrightsrespected/cli` command-line interface
   - `keygen`
   - `attest`
   - `verify`

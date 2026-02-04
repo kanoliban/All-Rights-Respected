@@ -2,14 +2,14 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 const root = process.cwd();
-const manifests = [
-  "packages/arr-core/package.json",
-  "packages/arr-cli/package.json",
-];
+const manifests = {
+  "packages/arr-core/package.json": "@allrightsrespected/sdk",
+  "packages/arr-cli/package.json": "@allrightsrespected/cli",
+};
 
 const errors = [];
 
-for (const manifestPath of manifests) {
+for (const [manifestPath, expectedName] of Object.entries(manifests)) {
   const fullPath = path.join(root, manifestPath);
   const raw = await readFile(fullPath, "utf8");
   const pkg = JSON.parse(raw);
@@ -20,10 +20,8 @@ for (const manifestPath of manifests) {
 
   if (typeof pkg.name !== "string" || pkg.name.length === 0) {
     errors.push(`${manifestPath}: package name is missing.`);
-  } else if (pkg.name.includes("/internal-")) {
-    errors.push(
-      `${manifestPath}: package name (${pkg.name}) is still internal. Choose final public package names before publish.`,
-    );
+  } else if (pkg.name !== expectedName) {
+    errors.push(`${manifestPath}: package name must be ${expectedName}, found ${pkg.name}.`);
   }
 
   if (typeof pkg.description !== "string" || pkg.description.trim().length === 0) {

@@ -16,7 +16,7 @@ import {
   writeSidecar,
   type Attestation,
   type SignedAttestation,
-} from "@arr/internal-core";
+} from "@allrightsrespected/sdk";
 
 type Command = "keygen" | "attest" | "verify" | "extract";
 

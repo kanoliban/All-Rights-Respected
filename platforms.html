@@ -688,7 +688,7 @@
       <h3>Level 1: Detection &amp; Display</h3>
       <p>The simplest integration. When content is uploaded or displayed, check for an ARR attestation and show a badge if present.</p>
 
-      <pre><code><span class="keyword">import</span> { extractAttestationFromMetadata, verifyAttestation } <span class="keyword">from</span> <span class="string">'@arr/internal-core'</span>;
+      <pre><code><span class="keyword">import</span> { extractAttestationFromMetadata, verifyAttestation } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
 
 <span class="comment">// On file upload or display</span>
 <span class="keyword">async function</span> <span class="function">checkAttestation</span>(fileBuffer) {
@@ -721,7 +721,7 @@
       <h3>Level 2: Attestation Creation</h3>
       <p>Allow creators to add attestations when uploading content. Provide a simple UI for entering intent and generating signed attestations.</p>
 
-      <pre><code><span class="keyword">import</span> { signAttestation, embedAttestationInMetadata, writeSidecar } <span class="keyword">from</span> <span class="string">'@arr/internal-core'</span>;
+      <pre><code><span class="keyword">import</span> { signAttestation, embedAttestationInMetadata, writeSidecar } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
 
 <span class="comment">// On upload, if user opts in</span>
 <span class="keyword">async function</span> <span class="function">addAttestation</span>(file, userIntent, userPrivateKey) {

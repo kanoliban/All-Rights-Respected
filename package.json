@@ -20,14 +20,14 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace @arr/internal-core && npm run build --workspace @arr/internal-cli",
+    "build": "npm run build --workspace @allrightsrespected/sdk && npm run build --workspace @allrightsrespected/cli",
     "test": "npm run build && vitest run",
     "test:unit": "vitest run packages/arr-core/test",
     "test:integration": "npm run build && vitest run tests",
     "arr": "node packages/arr-cli/dist/index.js",
-    "pack:check": "npm run pack:check --workspace @arr/internal-core && npm run pack:check --workspace @arr/internal-cli",
+    "pack:check": "npm run pack:check --workspace @allrightsrespected/sdk && npm run pack:check --workspace @allrightsrespected/cli",
     "publish:validate": "node scripts/assert-publish-ready.mjs",
-    "publish:preflight": "npm run build && npm test && npm run pack:check"
+    "publish:preflight": "npm run build && npm test && npm run pack:check && npm run publish:validate"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

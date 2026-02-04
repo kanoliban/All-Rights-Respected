@@ -31,6 +31,7 @@ Completed:
 - GitHub issue templates and PR template added
 - baseline metrics page created (`docs/METRICS.md`)
 - npm publication policy + release workflow scaffolding added (`docs/PUBLISHING.md`, `.github/workflows/npm-release.yml`)
+- public package names finalized (`@allrightsrespected/sdk`, `@allrightsrespected/cli`)
 
 ## Stakeholders and Needs
 
@@ -143,5 +144,5 @@ Success criteria:
 ## Immediate Priority Order
 
 1. add metrics section (adoption + contributor throughput) and update it on a cadence
-2. finalize npm package names/scope and switch packages from internal/private to publish-ready
+2. verify npm scope ownership + maintainer auth for `@allrightsrespected/*`
 3. execute first npm release from a version tag via release workflow

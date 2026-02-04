@@ -1,9 +1,9 @@
 {
-  "name": "@arr/internal-core",
+  "name": "@allrightsrespected/sdk",
   "version": "0.1.0",
   "description": "ARR core protocol library (canonicalization, signing, verification, adapters).",
   "license": "CC0-1.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

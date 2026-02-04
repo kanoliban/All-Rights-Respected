@@ -639,7 +639,11 @@
 
     <section id="installation">
       <h2>1. Installation</h2>
-      <p>M1 implementation status: ARR tooling currently ships from this repository (not npm yet).</p>
+      <p>Current stable path: ARR tooling runs from this repository. Distribution package names are now finalized.</p>
+
+      <h3>Package Names (Distribution lane)</h3>
+      <pre><code>@allrightsrespected/sdk
+@allrightsrespected/cli</code></pre>
 
       <h3>Repository Workflow (Current)</h3>
       <pre><code>git clone https://github.com/kanoliban/All-Rights-Respected.git
@@ -660,7 +664,7 @@ fixtures/conformance/v0.1</code></pre>
 
       <div class="note">
         <div class="note-title">NOTE</div>
-        <p>Public npm package names are intentionally deferred for M1. Use the in-repo workspace packages until publication is announced.</p>
+        <p>Package names are finalized, but first npm publication still depends on scope ownership/auth setup. Until that is complete, use the in-repo workflow above.</p>
       </div>
     </section>
 
@@ -668,7 +672,7 @@ fixtures/conformance/v0.1</code></pre>
       <h2>2. Quick Start</h2>
       <p>Create and sign your first attestation in a few lines of code:</p>
 
-      <pre><code><span class="keyword">import</span> { generateKeyPair, signAttestation, verifyAttestation } <span class="keyword">from</span> <span class="string">'@arr/internal-core'</span>;
+      <pre><code><span class="keyword">import</span> { generateKeyPair, signAttestation, verifyAttestation } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
 
 <span class="comment">// Generate a new Ed25519 keypair</span>
 <span class="keyword">const</span> { privateKeyPem, publicKeyPem, creator } = <span class="function">generateKeyPair</span>();
@@ -694,7 +698,7 @@ console.<span class="function">log</span>(signed);
 // }</span></code></pre>
 
       <h3>Verify an Attestation</h3>
-      <pre><code><span class="keyword">import</span> { verifyAttestation } <span class="keyword">from</span> <span class="string">'@arr/internal-core'</span>;
+      <pre><code><span class="keyword">import</span> { verifyAttestation } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
 
 <span class="keyword">const</span> result = <span class="function">verifyAttestation</span>(signed, publicKeyPem);
 
@@ -711,7 +715,7 @@ console.<span class="function">log</span>(signed);
       <p>M1 supports Ed25519 only.</p>
 
       <h3>3.1 Ed25519 (Recommended)</h3>
-      <pre><code><span class="keyword">import</span> { generateKeyPair, signAttestation } <span class="keyword">from</span> <span class="string">'@arr/internal-core'</span>;
+      <pre><code><span class="keyword">import</span> { generateKeyPair, signAttestation } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
 
 <span class="comment">// Generate Ed25519 keypair</span>
 <span class="keyword">const</span> keys = <span class="function">generateKeyPair</span>();
@@ -948,7 +952,7 @@ console.<span class="function">log</span>(signed);
       <pre><code>artwork.png
 artwork.png.arr    <span class="comment"># JSON attestation file</span></code></pre>
 
-      <pre><code><span class="keyword">import</span> { writeSidecar, readSidecar } <span class="keyword">from</span> <span class="string">'@arr/internal-core'</span>;
+      <pre><code><span class="keyword">import</span> { writeSidecar, readSidecar } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
 
 <span class="comment">// Write sidecar</span>
 <span class="keyword">await</span> <span class="function">writeSidecar</span>(<span class="string">'./artwork.png'</span>, signed);

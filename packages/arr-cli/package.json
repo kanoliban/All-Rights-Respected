@@ -1,9 +1,9 @@
 {
-  "name": "@arr/internal-cli",
+  "name": "@allrightsrespected/cli",
   "version": "0.1.0",
   "description": "ARR command line interface for attesting and verifying files.",
   "license": "CC0-1.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -41,6 +41,6 @@
     "pack:check": "npm_config_cache=../../.npm-cache npm pack --dry-run"
   },
   "dependencies": {
-    "@arr/internal-core": "0.1.0"
+    "@allrightsrespected/sdk": "0.1.0"
   }
 }

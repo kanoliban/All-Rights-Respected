@@ -77,7 +77,8 @@ All of that is useful.
 
 ## M1 reference implementation (in this repo)
 
-Current implementation status is build-first and in-repo (no npm publish yet).
+Current implementation status is build-first and in-repo.
+Distribution package names are finalized as `@allrightsrespected/sdk` and `@allrightsrespected/cli`, with first npm publication pending scope/auth verification.
 
 ```bash
 npm install

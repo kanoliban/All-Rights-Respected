@@ -63,7 +63,8 @@ Outcome: ARR is publication-ready with explicit release gates.
 
 - [x] prepare package naming/publication policy and preflight checks (`docs/PUBLISHING.md`)
 - [x] add manual npm release workflow (`.github/workflows/npm-release.yml`)
-- [ ] finalize public package names and npm scope ownership
+- [x] finalize public package names (`@allrightsrespected/sdk`, `@allrightsrespected/cli`)
+- [ ] verify npm scope ownership and maintainer auth for first publish
 - [ ] publish stable npm packages
 
 Exit criteria:
