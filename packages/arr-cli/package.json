@@ -1,13 +1,44 @@
 {
   "name": "@arr/internal-cli",
   "version": "0.1.0",
+  "description": "ARR command line interface for attesting and verifying files.",
+  "license": "CC0-1.0",
   "private": true,
   "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "arr": "dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "arr",
+    "attribution",
+    "cli",
+    "metadata",
+    "verification"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kanoliban/All-Rights-Respected.git",
+    "directory": "packages/arr-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/kanoliban/All-Rights-Respected/issues"
+  },
+  "homepage": "https://github.com/kanoliban/All-Rights-Respected#readme",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "pack:check": "npm_config_cache=../../.npm-cache npm pack --dry-run"
   },
   "dependencies": {
     "@arr/internal-core": "0.1.0"

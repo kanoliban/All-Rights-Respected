@@ -57,25 +57,34 @@ Exit criteria:
 - External contributor can submit a PR using project templates and docs
 - Early adopter can run ARR CLI and understand supported scope without private guidance
 
-## M2 - JS SDK baseline (Weeks 4-8)
+## M1.2 - Distribution (Weeks 6-8)
 
-Outcome: platform and tool developers can integrate ARR without custom cryptography.
+Outcome: ARR is publication-ready with explicit release gates.
 
-- [ ] Ship JS/TS SDK with:
-  - `createAttestation`
-  - `signAttestation`
-  - `verifyAttestation`
-  - `embedAttestation`
-  - `extractAttestation`
-- [ ] Provide typed interfaces for `arr/0.1`
-- [ ] Add reference examples for browser and Node
+- [x] prepare package naming/publication policy and preflight checks (`docs/PUBLISHING.md`)
+- [x] add manual npm release workflow (`.github/workflows/npm-release.yml`)
+- [ ] finalize public package names and npm scope ownership
+- [ ] publish stable npm packages
 
 Exit criteria:
-- NPM package published
-- Public API is tested and documented
-- SDK passes protocol fixture suite
+- tag-based release flow is documented and automatable
+- publication can be executed without ad-hoc maintainer steps
 
-## M3 - Adoption primitives (Weeks 8-12)
+## M2 - SDK and adapter expansion (Weeks 8-12)
+
+Outcome: platform and tool developers can integrate ARR without custom wrappers.
+
+- [ ] publish installable JS/TS core + CLI packages
+- [ ] add browser-facing usage examples and API cookbook
+- [ ] evaluate helper API additions (`createAttestation`, adapter convenience methods) without breaking `arr/0.1` semantics
+- [ ] expand format support beyond PNG/JPEG based on adopter demand
+
+Exit criteria:
+- installable package path is stable and documented
+- reference integrations can use published packages without repo cloning
+- fixture suite expands with new adapter coverage
+
+## M3 - Adoption primitives (Weeks 12-16)
 
 Outcome: first integrations and governance-ready contributor workflow.
 

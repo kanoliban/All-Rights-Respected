@@ -1,0 +1,71 @@
+name: NPM Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Git tag to release from (example: v0.1.0-m1)
+        required: true
+        type: string
+      npm_tag:
+        description: npm dist-tag (next or latest)
+        required: true
+        default: next
+        type: choice
+        options:
+          - next
+          - latest
+      publish:
+        description: Actually publish to npm (false = preflight only)
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate tag exists
+        run: |
+          git rev-parse "${{ inputs.release_tag }}" >/dev/null
+
+      - name: Checkout release tag
+        run: |
+          git checkout "${{ inputs.release_tag }}"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Package dry-run
+        run: npm run pack:check
+
+      - name: Publish readiness validation
+        if: ${{ inputs.publish }}
+        run: npm run publish:validate
+
+      - name: Publish packages
+        if: ${{ inputs.publish }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm publish --workspace @arr/internal-core --provenance --access public --tag "${{ inputs.npm_tag }}"
+          npm publish --workspace @arr/internal-cli --provenance --access public --tag "${{ inputs.npm_tag }}"

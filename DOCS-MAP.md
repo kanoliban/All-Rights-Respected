@@ -16,6 +16,7 @@ Last updated: 2026-02-04
 | `sdk.html` | SDK-facing documentation and examples |
 | `docs/IMPLEMENTATION.md` | M1 implementation and CLI operational guide |
 | `docs/RELEASE-v0.1.0-m1.md` | M1 release summary and operational quickstart |
+| `docs/PUBLISHING.md` | npm publication policy, compatibility rules, and release gates |
 | `docs/METRICS.md` | Adoption and contributor throughput tracking |
 | `CONTRIBUTING.md` | Contributor workflow and guardrails |
 | `SECURITY.md` | Vulnerability reporting and security response policy |

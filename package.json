@@ -1,8 +1,21 @@
 {
   "name": "all-rights-respected",
   "version": "0.1.0",
+  "description": "All Rights Respected (ARR) reference implementation and protocol docs.",
+  "license": "CC0-1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kanoliban/All-Rights-Respected.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kanoliban/All-Rights-Respected/issues"
+  },
+  "homepage": "https://github.com/kanoliban/All-Rights-Respected#readme",
   "workspaces": [
     "packages/*"
   ],
@@ -11,7 +24,10 @@
     "test": "npm run build && vitest run",
     "test:unit": "vitest run packages/arr-core/test",
     "test:integration": "npm run build && vitest run tests",
-    "arr": "node packages/arr-cli/dist/index.js"
+    "arr": "node packages/arr-cli/dist/index.js",
+    "pack:check": "npm run pack:check --workspace @arr/internal-core && npm run pack:check --workspace @arr/internal-cli",
+    "publish:validate": "node scripts/assert-publish-ready.mjs",
+    "publish:preflight": "npm run build && npm test && npm run pack:check"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

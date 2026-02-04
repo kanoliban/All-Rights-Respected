@@ -30,6 +30,7 @@ Completed:
 - contributor operations docs (`CONTRIBUTING.md`, `SECURITY.md`)
 - GitHub issue templates and PR template added
 - baseline metrics page created (`docs/METRICS.md`)
+- npm publication policy + release workflow scaffolding added (`docs/PUBLISHING.md`, `.github/workflows/npm-release.yml`)
 
 ## Stakeholders and Needs
 
@@ -142,5 +143,5 @@ Success criteria:
 ## Immediate Priority Order
 
 1. add metrics section (adoption + contributor throughput) and update it on a cadence
-2. choose and execute one M1.2 distribution decision (recommended: npm publication lane)
-3. keep docs/spec/tooling in lockstep as distribution changes land
+2. finalize npm package names/scope and switch packages from internal/private to publish-ready
+3. execute first npm release from a version tag via release workflow
