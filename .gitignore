@@ -30,3 +30,10 @@ npm-debug.log*
 .env.local
 .env.*.local
 .env*.local
+
+# Local supplementary research (non-canonical)
+migrated-local/*
+migrated-local/Chatgpt transcript.md
+migrated-local/Claude transcript.md
+migrated-local/all right respected.html
+migrated-local/react-app.js

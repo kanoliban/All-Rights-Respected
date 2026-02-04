@@ -688,17 +688,19 @@
       <h3>Level 1: Detection &amp; Display</h3>
       <p>The simplest integration. When content is uploaded or displayed, check for an ARR attestation and show a badge if present.</p>
 
-      <pre><code><span class="keyword">import</span> { extractAttestation, verifyAttestation } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
+      <pre><code><span class="keyword">import</span> { extractAttestationFromMetadata, verifyAttestation } <span class="keyword">from</span> <span class="string">'@arr/internal-core'</span>;
 
 <span class="comment">// On file upload or display</span>
 <span class="keyword">async function</span> <span class="function">checkAttestation</span>(fileBuffer) {
-  <span class="keyword">const</span> signed = <span class="keyword">await</span> <span class="function">extractAttestation</span>(fileBuffer);
+  <span class="keyword">const</span> metadata = <span class="function">extractAttestationFromMetadata</span>(fileBuffer);
+  <span class="keyword">const</span> signed = metadata?.signed;
+  <span class="comment">// For non-image formats, check a sidecar file in your storage layer.</span>
 
   <span class="keyword">if</span> (!signed) {
     <span class="keyword">return</span> { hasAttestation: <span class="bool">false</span> };
   }
 
-  <span class="keyword">const</span> result = <span class="keyword">await</span> <span class="function">verifyAttestation</span>(signed);
+  <span class="keyword">const</span> result = <span class="function">verifyAttestation</span>(signed);
 
   <span class="keyword">return</span> {
     hasAttestation: <span class="bool">true</span>,
@@ -719,20 +721,28 @@
       <h3>Level 2: Attestation Creation</h3>
       <p>Allow creators to add attestations when uploading content. Provide a simple UI for entering intent and generating signed attestations.</p>
 
-      <pre><code><span class="keyword">import</span> { createAttestation, signAttestation } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
+      <pre><code><span class="keyword">import</span> { signAttestation, embedAttestationInMetadata, writeSidecar } <span class="keyword">from</span> <span class="string">'@arr/internal-core'</span>;
 
 <span class="comment">// On upload, if user opts in</span>
 <span class="keyword">async function</span> <span class="function">addAttestation</span>(file, userIntent, userPrivateKey) {
-  <span class="keyword">const</span> attestation = <span class="function">createAttestation</span>({
+  <span class="keyword">const</span> attestation = {
+    version: <span class="string">'arr/0.1'</span>,
+    id: crypto.<span class="function">randomUUID</span>(),
+    created: <span class="keyword">new</span> Date().<span class="function">toISOString</span>(),
     creator: <span class="string">`https://yourplatform.com/users/${userId}`</span>,
     intent: userIntent,
-    tool: <span class="string">'manual-upload'</span>
-  });
+    tool: <span class="string">'manual-upload'</span>,
+    revocable: <span class="bool">true</span>
+  };
 
-  <span class="keyword">const</span> signed = <span class="keyword">await</span> <span class="function">signAttestation</span>(attestation, userPrivateKey);
-  <span class="keyword">const</span> embeddedFile = <span class="keyword">await</span> <span class="function">embedAttestation</span>(file, signed);
+  <span class="keyword">const</span> signed = <span class="function">signAttestation</span>(attestation, userPrivateKey);
 
-  <span class="keyword">return</span> embeddedFile;
+  <span class="keyword">if</span> (file.type === <span class="string">'image/png'</span> || file.type === <span class="string">'image/jpeg'</span>) {
+    <span class="keyword">return</span> <span class="function">embedAttestationInMetadata</span>(file, signed);
+  }
+
+  <span class="keyword">await</span> <span class="function">writeSidecar</span>(<span class="string">'./upload.bin'</span>, signed);
+  <span class="keyword">return</span> file;
 }</code></pre>
 
       <h3>Level 3: Full Integration</h3>
@@ -785,6 +795,7 @@
         <li><strong>Valid</strong> — Signature verified, not expired</li>
         <li><strong>Expired</strong> — Signature verified, past expiration date</li>
         <li><strong>Unverified</strong> — Cannot verify signature (missing key)</li>
+        <li><strong>Invalid</strong> — Verification failed (`invalid_signature`, `unsupported_version`, or `malformed`)</li>
         <li><strong>None</strong> — No attestation present (neutral, not negative)</li>
       </ul>
 
@@ -803,9 +814,9 @@
       <p>Ready to integrate? Here's how to begin:</p>
 
       <ol>
-        <li>Install the SDK: <code>npm install @allrightsrespected/sdk</code></li>
+        <li>Clone this repository and build local packages: <code>npm install && npm run build</code></li>
         <li>Start with Level 1: detection and display</li>
-        <li>Test with the SDK to create and verify attestations locally</li>
+        <li>Test with <code>packages/arr-cli</code> and conformance fixtures in <code>fixtures/conformance/v0.1</code></li>
         <li>Gradually expand to Levels 2 and 3 based on user demand</li>
       </ol>
 
@@ -818,7 +829,7 @@
 
   <!-- Contact -->
   <section style="max-width: 700px; margin: 0 auto; padding: 3rem 2rem; text-align: center;">
-    <p style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--muted); margin: 0;">Questions, ideas, or want to contribute? <a href="https://github.com/kanoliban/allrightsrespected/issues" style="color: var(--accent);">Open an issue on GitHub</a> or reach out at <a href="mailto:hello@allrightsrespected.com" style="color: var(--accent);">hello@allrightsrespected.com</a></p>
+    <p style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--muted); margin: 0;">Questions, ideas, or want to contribute? <a href="https://github.com/kanoliban/All-Rights-Respected/issues" style="color: var(--accent);">Open an issue on GitHub</a> or reach out at <a href="mailto:hello@allrightsrespected.com" style="color: var(--accent);">hello@allrightsrespected.com</a></p>
   </section>
 
   <footer>

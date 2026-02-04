@@ -639,26 +639,28 @@
 
     <section id="installation">
       <h2>1. Installation</h2>
-      <p>Install the ARR SDK via npm, yarn, or pnpm:</p>
+      <p>M1 implementation status: ARR tooling currently ships from this repository (not npm yet).</p>
 
-      <h3>npm</h3>
-      <pre><code>npm install @allrightsrespected/sdk</code></pre>
+      <h3>Repository Workflow (Current)</h3>
+      <pre><code>git clone https://github.com/kanoliban/All-Rights-Respected.git
+cd All-Rights-Respected
+npm install
+npm run build</code></pre>
 
-      <h3>yarn</h3>
-      <pre><code>yarn add @allrightsrespected/sdk</code></pre>
-
-      <h3>pnpm</h3>
-      <pre><code>pnpm add @allrightsrespected/sdk</code></pre>
+      <h3>Implementation Location</h3>
+      <pre><code>packages/arr-core   # protocol + adapters
+packages/arr-cli    # CLI entrypoint
+fixtures/conformance/v0.1</code></pre>
 
       <h3>Requirements</h3>
       <ul>
-        <li>Node.js 18+ or modern browser with Web Crypto API</li>
-        <li>TypeScript 5.0+ (optional, types included)</li>
+        <li>Node.js 18+ (Node LTS recommended)</li>
+        <li>TypeScript 5.x</li>
       </ul>
 
       <div class="note">
         <div class="note-title">NOTE</div>
-        <p>The SDK has zero runtime dependencies. Cryptographic operations use the native Web Crypto API.</p>
+        <p>Public npm package names are intentionally deferred for M1. Use the in-repo workspace packages until publication is announced.</p>
       </div>
     </section>
 
@@ -666,20 +668,24 @@
       <h2>2. Quick Start</h2>
       <p>Create and sign your first attestation in a few lines of code:</p>
 
-      <pre><code><span class="keyword">import</span> { createAttestation, signAttestation, generateKeyPair } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
+      <pre><code><span class="keyword">import</span> { generateKeyPair, signAttestation, verifyAttestation } <span class="keyword">from</span> <span class="string">'@arr/internal-core'</span>;
 
 <span class="comment">// Generate a new Ed25519 keypair</span>
-<span class="keyword">const</span> { publicKey, privateKey } = <span class="keyword">await</span> <span class="function">generateKeyPair</span>();
+<span class="keyword">const</span> { privateKeyPem, publicKeyPem, creator } = <span class="function">generateKeyPair</span>();
 
 <span class="comment">// Create an attestation</span>
-<span class="keyword">const</span> attestation = <span class="function">createAttestation</span>({
-  <span class="key">creator</span>: <span class="string">`pubkey:ed25519:${publicKey}`</span>,
+<span class="keyword">const</span> attestation = {
+  <span class="key">version</span>: <span class="string">'arr/0.1'</span>,
+  <span class="key">id</span>: crypto.<span class="function">randomUUID</span>(),
+  <span class="key">created</span>: <span class="keyword">new</span> Date().<span class="function">toISOString</span>(),
+  <span class="key">creator</span>: creator,
   <span class="key">intent</span>: <span class="string">'Album cover for indie rock EP'</span>,
   <span class="key">tool</span>: <span class="string">'midjourney/6.1'</span>,
-});
+  <span class="key">revocable</span>: <span class="bool">true</span>
+};
 
 <span class="comment">// Sign it</span>
-<span class="keyword">const</span> signed = <span class="keyword">await</span> <span class="function">signAttestation</span>(attestation, privateKey);
+<span class="keyword">const</span> signed = <span class="function">signAttestation</span>(attestation, privateKeyPem);
 
 console.<span class="function">log</span>(signed);
 <span class="comment">// {
@@ -688,13 +694,13 @@ console.<span class="function">log</span>(signed);
 // }</span></code></pre>
 
       <h3>Verify an Attestation</h3>
-      <pre><code><span class="keyword">import</span> { verifyAttestation } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
+      <pre><code><span class="keyword">import</span> { verifyAttestation } <span class="keyword">from</span> <span class="string">'@arr/internal-core'</span>;
 
-<span class="keyword">const</span> result = <span class="keyword">await</span> <span class="function">verifyAttestation</span>(signed, publicKey);
+<span class="keyword">const</span> result = <span class="function">verifyAttestation</span>(signed, publicKeyPem);
 
 <span class="keyword">if</span> (result.valid) {
-  console.<span class="function">log</span>(<span class="string">'Attestation is valid!'</span>);
-  console.<span class="function">log</span>(<span class="string">`Expires: ${result.expires}`</span>);
+  console.<span class="function">log</span>(<span class="string">'Attestation is valid.'</span>);
+  console.<span class="function">log</span>(<span class="string">`Expired: ${result.expired}`</span>);
 } <span class="keyword">else</span> {
   console.<span class="function">log</span>(<span class="string">`Invalid: ${result.reason}`</span>);
 }</code></pre>
@@ -702,29 +708,19 @@ console.<span class="function">log</span>(signed);
 
     <section id="signing">
       <h2>3. Signing Attestations</h2>
-      <p>The SDK supports multiple signing algorithms. Ed25519 is recommended for most use cases.</p>
+      <p>M1 supports Ed25519 only.</p>
 
       <h3>3.1 Ed25519 (Recommended)</h3>
-      <pre><code><span class="keyword">import</span> { generateKeyPair, signAttestation } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
+      <pre><code><span class="keyword">import</span> { generateKeyPair, signAttestation } <span class="keyword">from</span> <span class="string">'@arr/internal-core'</span>;
 
 <span class="comment">// Generate Ed25519 keypair</span>
-<span class="keyword">const</span> keys = <span class="keyword">await</span> <span class="function">generateKeyPair</span>(<span class="string">'ed25519'</span>);
+<span class="keyword">const</span> keys = <span class="function">generateKeyPair</span>();
 
 <span class="comment">// Sign with private key</span>
-<span class="keyword">const</span> signed = <span class="keyword">await</span> <span class="function">signAttestation</span>(attestation, keys.privateKey);</code></pre>
+<span class="keyword">const</span> signed = <span class="function">signAttestation</span>(attestation, keys.privateKeyPem);</code></pre>
 
-      <h3>3.2 ECDSA P-256</h3>
-      <pre><code><span class="keyword">const</span> keys = <span class="keyword">await</span> <span class="function">generateKeyPair</span>(<span class="string">'ecdsa-p256'</span>);
-<span class="keyword">const</span> signed = <span class="keyword">await</span> <span class="function">signAttestation</span>(attestation, keys.privateKey, <span class="string">'ecdsa-p256'</span>);</code></pre>
-
-      <h3>3.3 Using Existing Keys</h3>
-      <pre><code><span class="keyword">import</span> { importPrivateKey } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
-
-<span class="comment">// Import from PEM or raw bytes</span>
-<span class="keyword">const</span> privateKey = <span class="keyword">await</span> <span class="function">importPrivateKey</span>(pemString, <span class="string">'ed25519'</span>);
-
-<span class="comment">// Or from base64-encoded raw key</span>
-<span class="keyword">const</span> privateKey = <span class="keyword">await</span> <span class="function">importPrivateKey</span>(base64Key, <span class="string">'ed25519'</span>, <span class="string">'raw'</span>);</code></pre>
+      <h3>3.2 Planned Algorithms (Not in M1)</h3>
+      <pre><code>ecdsa-p256, rsa-sha256</code></pre>
 
       <div class="warning">
         <div class="note-title">SECURITY</div>
@@ -735,12 +731,12 @@ console.<span class="function">log</span>(signed);
     <section id="api">
       <h2>4. API Reference</h2>
 
-      <h3>createAttestation(options)</h3>
-      <p>Creates a new unsigned attestation object.</p>
+      <h3>Attestation Object (Build Manually in M1)</h3>
+      <p>M1 does not ship a <code>createAttestation()</code> helper. Build the unsigned attestation object directly before signing.</p>
       <table>
         <thead>
           <tr>
-            <th>Parameter</th>
+            <th>Field</th>
             <th>Type</th>
             <th>Required</th>
             <th>Description</th>
@@ -775,7 +771,7 @@ console.<span class="function">log</span>(signed);
             <td><code>expires</code></td>
             <td>string | Date</td>
             <td>No</td>
-            <td>Expiration date (default: 5 years)</td>
+            <td>Expiration date (no automatic default is injected by M1 tooling)</td>
           </tr>
           <tr>
             <td><code>license</code></td>
@@ -792,7 +788,7 @@ console.<span class="function">log</span>(signed);
         </tbody>
       </table>
 
-      <h3>signAttestation(attestation, privateKey, algorithm?)</h3>
+      <h3>signAttestation(attestation, privateKeyPem)</h3>
       <p>Signs an attestation and returns the complete signed object.</p>
       <table>
         <thead>
@@ -809,14 +805,9 @@ console.<span class="function">log</span>(signed);
             <td>Unsigned attestation object</td>
           </tr>
           <tr>
-            <td><code>privateKey</code></td>
-            <td>CryptoKey</td>
-            <td>Private key for signing</td>
-          </tr>
-          <tr>
-            <td><code>algorithm</code></td>
+            <td><code>privateKeyPem</code></td>
             <td>string</td>
-            <td>Optional: <code>'ed25519'</code> | <code>'ecdsa-p256'</code></td>
+            <td>PEM-encoded Ed25519 private key</td>
           </tr>
         </tbody>
       </table>
@@ -826,22 +817,20 @@ console.<span class="function">log</span>(signed);
       <pre><code><span class="keyword">interface</span> VerificationResult {
   <span class="key">valid</span>: <span class="bool">boolean</span>;
   <span class="key">expired</span>?: <span class="bool">boolean</span>;
-  <span class="key">reason</span>?: <span class="string">'invalid_signature'</span> | <span class="string">'unsupported_version'</span> | <span class="string">'malformed'</span>;
-  <span class="key">expires</span>?: Date;
+  <span class="key">reason</span>?: <span class="string">'invalid_signature'</span> | <span class="string">'unsupported_version'</span> | <span class="string">'malformed'</span> | <span class="string">'missing_public_key'</span>;
 }</code></pre>
 
-      <h3>embedAttestation(file, signed, options?)</h3>
-      <p>Embeds a signed attestation into file metadata.</p>
-      <pre><code><span class="keyword">const</span> embeddedFile = <span class="keyword">await</span> <span class="function">embedAttestation</span>(imageBuffer, signed, {
-  <span class="key">format</span>: <span class="string">'xmp'</span>,  <span class="comment">// 'xmp' | 'exif' | 'sidecar'</span>
-});
+      <h3>embedAttestationInMetadata(file, signed)</h3>
+      <p>Embeds a signed attestation into PNG/JPEG metadata.</p>
+      <pre><code><span class="keyword">const</span> embeddedFile = <span class="function">embedAttestationInMetadata</span>(imageBuffer, signed);
 
 <span class="comment">// Write to disk</span>
 <span class="keyword">await</span> fs.<span class="function">writeFile</span>(<span class="string">'artwork-with-arr.png'</span>, embeddedFile);</code></pre>
 
-      <h3>extractAttestation(file)</h3>
-      <p>Extracts an attestation from file metadata.</p>
-      <pre><code><span class="keyword">const</span> signed = <span class="keyword">await</span> <span class="function">extractAttestation</span>(imageBuffer);
+      <h3>extractAttestationFromMetadata(file)</h3>
+      <p>Extracts an attestation from PNG/JPEG metadata.</p>
+      <pre><code><span class="keyword">const</span> extracted = <span class="function">extractAttestationFromMetadata</span>(imageBuffer);
+<span class="keyword">const</span> signed = extracted?.signed;
 
 <span class="keyword">if</span> (signed) {
   console.<span class="function">log</span>(signed.attestation.creator);
@@ -880,13 +869,18 @@ console.<span class="function">log</span>(signed);
   | <span class="string">`https://${string}`</span>
   | <span class="string">`email:sha256:${string}`</span>;</code></pre>
 
+      <div class="note">
+        <div class="note-title">IMPLEMENTATION NOTE</div>
+        <p>The protocol schema allows broader identifier formats, but the shipped M1 verifier performs automatic key discovery only for <code>pubkey:ed25519:...</code>.</p>
+      </div>
+
       <h3>JSON Schema</h3>
-      <p>For JSON Schema validation, see <a href="https://github.com/allrightsrespected/arr/blob/main/schema/attestation.schema.json" style="color: var(--accent);">attestation.schema.json</a> in the repository.</p>
+      <p>For canonical schema details, see <a href="https://github.com/kanoliban/All-Rights-Respected/blob/main/SPEC.md#2-attestation-format" style="color: var(--accent);">Section 2 of SPEC.md</a> in the repository.</p>
     </section>
 
     <section id="formats">
       <h2>6. Supported Formats</h2>
-      <p>The SDK supports embedding attestations in various file formats:</p>
+      <p>M1 format support in the shipped implementation:</p>
 
       <table>
         <thead>
@@ -907,38 +901,38 @@ console.<span class="function">log</span>(signed);
           <tr>
             <td>PNG</td>
             <td><code>.png</code></td>
-            <td>XMP metadata (iTXt chunk)</td>
+            <td>iTXt chunk (<code>arr.attestation</code>)</td>
             <td>Supported</td>
           </tr>
           <tr>
             <td>WebP</td>
             <td><code>.webp</code></td>
             <td>XMP metadata</td>
-            <td>Supported</td>
+            <td>Planned</td>
           </tr>
           <tr>
             <td>PDF</td>
             <td><code>.pdf</code></td>
             <td>XMP metadata stream</td>
-            <td>Supported</td>
+            <td>Planned</td>
           </tr>
           <tr>
             <td>MP3</td>
             <td><code>.mp3</code></td>
             <td>ID3v2 TXXX:ARR tag</td>
-            <td>Supported</td>
+            <td>Planned</td>
           </tr>
           <tr>
             <td>FLAC</td>
             <td><code>.flac</code></td>
             <td>Vorbis comment</td>
-            <td>Supported</td>
+            <td>Planned</td>
           </tr>
           <tr>
             <td>MP4</td>
             <td><code>.mp4</code>, <code>.m4a</code></td>
             <td>XMP metadata</td>
-            <td>Beta</td>
+            <td>Planned</td>
           </tr>
           <tr>
             <td>Any</td>
@@ -954,7 +948,7 @@ console.<span class="function">log</span>(signed);
       <pre><code>artwork.png
 artwork.png.arr    <span class="comment"># JSON attestation file</span></code></pre>
 
-      <pre><code><span class="keyword">import</span> { writeSidecar, readSidecar } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
+      <pre><code><span class="keyword">import</span> { writeSidecar, readSidecar } <span class="keyword">from</span> <span class="string">'@arr/internal-core'</span>;
 
 <span class="comment">// Write sidecar</span>
 <span class="keyword">await</span> <span class="function">writeSidecar</span>(<span class="string">'./artwork.png'</span>, signed);
@@ -964,14 +958,14 @@ artwork.png.arr    <span class="comment"># JSON attestation file</span></code></
 
       <div class="note">
         <div class="note-title">NOTE</div>
-        <p>When distributing work with sidecar attestations, include both the original file and the <code>.arr</code> sidecar file together.</p>
+        <p>When distributing work with sidecar attestations, include both the original file and the <code>.arr</code> sidecar file together. For current implementation details, see <code>packages/arr-core</code> and <code>packages/arr-cli</code> in this repository.</p>
       </div>
     </section>
   </main>
 
   <!-- Contact -->
   <section style="max-width: 700px; margin: 0 auto; padding: 3rem 2rem; text-align: center;">
-    <p style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--muted); margin: 0;">Questions, ideas, or want to contribute? <a href="https://github.com/kanoliban/allrightsrespected/issues" style="color: var(--accent);">Open an issue on GitHub</a> or reach out at <a href="mailto:hello@allrightsrespected.com" style="color: var(--accent);">hello@allrightsrespected.com</a></p>
+    <p style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--muted); margin: 0;">Questions, ideas, or want to contribute? <a href="https://github.com/kanoliban/All-Rights-Respected/issues" style="color: var(--accent);">Open an issue on GitHub</a> or reach out at <a href="mailto:hello@allrightsrespected.com" style="color: var(--accent);">hello@allrightsrespected.com</a></p>
   </section>
 
   <footer>

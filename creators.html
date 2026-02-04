@@ -800,33 +800,47 @@
       </div>
 
       <h3>Using the CLI</h3>
-      <pre><code><span class="comment"># Install the CLI</span>
-npm install -g @allrightsrespected/cli
+      <pre><code><span class="comment"># M1: run the CLI from this repository (package publishing comes later)</span>
+git clone https://github.com/kanoliban/All-Rights-Respected.git
+cd All-Rights-Respected
+npm install
+npm run build
 
 <span class="comment"># Create and embed an attestation</span>
-arr attest artwork.png \
+node packages/arr-cli/dist/index.js attest artwork.png \
   --creator <span class="string">"https://yoursite.com/@you"</span> \
+  --private-key <span class="string">"./keys/arr-ed25519-private.pem"</span> \
   --intent <span class="string">"Poster design for climate campaign"</span> \
   --tool <span class="string">"midjourney/6.1"</span>
 
 <span class="comment"># Verify an existing attestation</span>
-arr verify artwork.png</code></pre>
+node packages/arr-cli/dist/index.js verify artwork.png</code></pre>
 
       <h3>Using the SDK</h3>
-      <pre><code><span class="keyword">import</span> { createAttestation, signAttestation, embedAttestation } <span class="keyword">from</span> <span class="string">'@allrightsrespected/sdk'</span>;
+      <pre><code><span class="comment">// M1 package names are internal and shipped in-repo.</span>
+<span class="keyword">import</span> {
+  signAttestation,
+  embedAttestationInMetadata,
+  writeSidecar
+} <span class="keyword">from</span> <span class="string">'@arr/internal-core'</span>;
 
 <span class="comment">// Create an attestation</span>
-<span class="keyword">const</span> attestation = <span class="function">createAttestation</span>({
+<span class="keyword">const</span> attestation = {
+  <span class="key">version</span>: <span class="string">'arr/0.1'</span>,
+  <span class="key">id</span>: crypto.<span class="function">randomUUID</span>(),
+  <span class="key">created</span>: <span class="keyword">new</span> Date().<span class="function">toISOString</span>(),
   <span class="key">creator</span>: <span class="string">'https://yoursite.com/@you'</span>,
   <span class="key">intent</span>: <span class="string">'Poster design for climate campaign'</span>,
-  <span class="key">tool</span>: <span class="string">'midjourney/6.1'</span>
-});
+  <span class="key">tool</span>: <span class="string">'midjourney/6.1'</span>,
+  <span class="key">revocable</span>: <span class="bool">true</span>
+};
 
 <span class="comment">// Sign it with your private key</span>
-<span class="keyword">const</span> signed = <span class="keyword">await</span> <span class="function">signAttestation</span>(attestation, privateKey);
+<span class="keyword">const</span> signed = <span class="function">signAttestation</span>(attestation, privateKeyPem);
 
-<span class="comment">// Embed in your file</span>
-<span class="keyword">const</span> output = <span class="keyword">await</span> <span class="function">embedAttestation</span>(imageBuffer, signed);</code></pre>
+<span class="comment">// Embed in PNG/JPEG metadata, otherwise write a sidecar file</span>
+<span class="keyword">const</span> output = <span class="function">embedAttestationInMetadata</span>(imageBuffer, signed);
+<span class="keyword">await</span> <span class="function">writeSidecar</span>(<span class="string">'./artwork.png'</span>, signed);</code></pre>
     </section>
 
     <section>
@@ -887,7 +901,7 @@ arr verify artwork.png</code></pre>
 
   <!-- Contact -->
   <section style="max-width: 700px; margin: 0 auto; padding: 3rem 2rem; text-align: center;">
-    <p style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--muted); margin: 0;">Questions, ideas, or want to contribute? <a href="https://github.com/kanoliban/allrightsrespected/issues" style="color: var(--accent);">Open an issue on GitHub</a> or reach out at <a href="mailto:hello@allrightsrespected.com" style="color: var(--accent);">hello@allrightsrespected.com</a></p>
+    <p style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--muted); margin: 0;">Questions, ideas, or want to contribute? <a href="https://github.com/kanoliban/All-Rights-Respected/issues" style="color: var(--accent);">Open an issue on GitHub</a> or reach out at <a href="mailto:hello@allrightsrespected.com" style="color: var(--accent);">hello@allrightsrespected.com</a></p>
   </section>
 
   <footer>

@@ -748,14 +748,14 @@ function ImplementationSection() {
         <a href="spec.html" className="btn btn-primary">
           Read the Specification
         </a>
-        <a href="https://github.com/allrightsrespected/arr" className="btn">
-          View Reference Implementation
+        <a href="https://github.com/kanoliban/All-Rights-Respected" className="btn">
+          View Repository
         </a>
         <a
-          href="https://github.com/allrightsrespected/arr/discussions"
+          href="https://github.com/kanoliban/All-Rights-Respected/issues"
           className="btn"
         >
-          Join the Discussion
+          Open an Issue
         </a>
       </div>
       <style jsx>{`
@@ -926,9 +926,9 @@ function Footer() {
       <p>GIVEN AWAY FREELY.</p>
       <div className="footer-links">
         <a href="spec.html">SPECIFICATION</a>
-        <a href="https://github.com/allrightsrespected/arr">GITHUB</a>
-        <a href="https://github.com/allrightsrespected/arr/discussions">
-          DISCUSSION
+        <a href="https://github.com/kanoliban/All-Rights-Respected">GITHUB</a>
+        <a href="https://github.com/kanoliban/All-Rights-Respected/issues">
+          ISSUES
         </a>
       </div>
       <style jsx>{`

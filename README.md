@@ -60,6 +60,33 @@ I genuinely don't know what help looks like yet. Maybe you implement it in your 
 
 All of that is useful.
 
+## Working docs
+
+- [Documentation map](DOCS-MAP.md)
+- [Implementation guide (M1)](docs/IMPLEMENTATION.md)
+- [Roadmap](ROADMAP.md)
+- [Funding model](FUNDING.md)
+- [Bounty framework](BOUNTIES.md)
+
+## M1 reference implementation (in this repo)
+
+Current implementation status is build-first and in-repo (no npm publish yet).
+
+```bash
+npm install
+npm run build
+npm test
+```
+
+CLI location and examples:
+
+```bash
+node packages/arr-cli/dist/index.js keygen --out-dir ./keys
+node packages/arr-cli/dist/index.js attest ./artwork.png --creator "pubkey:ed25519:..." --private-key ./keys/arr-ed25519-private.pem --mode auto
+node packages/arr-cli/dist/index.js verify ./artwork.png --json
+node packages/arr-cli/dist/index.js extract ./artwork.png --json
+```
+
 ---
 
 *Earnestly,*
