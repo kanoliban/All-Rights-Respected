@@ -68,6 +68,7 @@ All of that is useful.
 - [Documentation map](DOCS-MAP.md)
 - [Product plan](PLAN.md)
 - [Implementation guide (M1)](docs/IMPLEMENTATION.md)
+- [CLI how-to (creators)](docs/CLI-HOWTO.md)
 - [Release notes (v0.1.0-m1)](docs/RELEASE-v0.1.0-m1.md)
 - [Publishing policy](docs/PUBLISHING.md)
 - [Metrics](docs/METRICS.md)
@@ -78,7 +79,7 @@ All of that is useful.
 ## M1 reference implementation (in this repo)
 
 Current implementation status is build-first and in-repo.
-Published npm packages: `@allrightsrespected/sdk` and `@allrightsrespected/cli` (v0.1.4).
+Published npm packages: `@allrightsrespected/sdk` and `@allrightsrespected/cli` (v0.1.5).
 
 ```bash
 npm install -g @allrightsrespected/cli
@@ -96,7 +97,8 @@ arr init
 arr watch
 
 arr attest ./artwork.png
-arr attest ./assets --recursive
+arr attest ./assets --recursive --types png,jpg,jpeg
+arr attest ./assets --recursive --all
 arr verify ./artwork.png --json
 arr extract ./artwork.png --json
 
@@ -115,7 +117,7 @@ arr init
 arr watch
 ```
 
-Now drag files into `~/ARR-Inbox`. PNG/JPEG files get `.attested` copies; other files get `.arr` sidecars.
+Now drag files into `~/ARR-Inbox`. PNG/JPEG files get `.attested` copies. Use `--all` to create sidecars for non-images.
 
 Known limitations (M1):
 - Ed25519 only
