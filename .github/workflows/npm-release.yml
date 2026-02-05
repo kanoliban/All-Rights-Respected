@@ -1,14 +1,14 @@
 name: NPM Release
 
-on:
+"on":
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Git tag to release from (example: v0.1.0-m1)
+        description: "Git tag to release from (example: v0.1.0-m1)"
         required: true
         type: string
       npm_tag:
-        description: npm dist-tag (next or latest)
+        description: "npm dist-tag (next or latest)"
         required: true
         default: next
         type: choice
@@ -16,7 +16,7 @@ on:
           - next
           - latest
       publish:
-        description: Actually publish to npm (false = preflight only)
+        description: "Actually publish to npm (false = preflight only)"
         required: true
         default: false
         type: boolean
