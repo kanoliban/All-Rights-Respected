@@ -356,6 +356,15 @@ function parseYesNo(input: string): boolean | null {
   return null;
 }
 
+function safePromptFallback(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const lowered = trimmed.toLowerCase();
+  if (YES_VALUES.has(lowered) || NO_VALUES.has(lowered)) return undefined;
+  return trimmed;
+}
+
 function createPrompter(): Prompter {
   const rl = createInterface({
     input: process.stdin,
@@ -413,24 +422,34 @@ function createPrompter(): Prompter {
 
   const choose = async (prompt: string, options: string[], fallbackIndex: number): Promise<string> => {
     const lines = options.map((option, index) => `  ${index + 1}) ${option}`);
-    const answer = await ask(`${prompt}\n${lines.join("\n")}`, {
-      fallback: String(fallbackIndex + 1),
-      hint: "Enter a number.",
-    });
-    const normalized = answer.trim().toLowerCase();
-    const yesNo = parseYesNo(normalized);
-    if (yesNo !== null && options.some((option) => option.toLowerCase() === "yes") && options.some((option) => option.toLowerCase() === "no")) {
-      if (yesNo === true) {
-        return options.find((option) => option.toLowerCase() === "yes") ?? options[fallbackIndex]!;
-      }
-      return options.find((option) => option.toLowerCase() === "no") ?? options[fallbackIndex]!;
-    }
+    const promptText = `${prompt}\n${lines.join("\n")}`;
+    const fallback = String(fallbackIndex + 1);
 
-    const parsed = Number.parseInt(answer, 10);
-    if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= options.length) {
-      return options[parsed - 1] ?? options[fallbackIndex]!;
+    while (true) {
+      const answer = await ask(promptText, {
+        fallback,
+        hint: "Enter a number (or Enter/y for default).",
+      });
+      const normalized = answer.trim().toLowerCase();
+      const yesNo = parseYesNo(normalized);
+      if (
+        yesNo !== null &&
+        options.some((option) => option.toLowerCase() === "yes") &&
+        options.some((option) => option.toLowerCase() === "no")
+      ) {
+        if (yesNo === true) {
+          return options.find((option) => option.toLowerCase() === "yes") ?? options[fallbackIndex]!;
+        }
+        return options.find((option) => option.toLowerCase() === "no") ?? options[fallbackIndex]!;
+      }
+
+      const parsed = Number.parseInt(answer, 10);
+      if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= options.length) {
+        return options[parsed - 1] ?? options[fallbackIndex]!;
+      }
+
+      process.stdout.write(`Please enter a number between 1 and ${options.length}.\n`);
     }
-    return options[fallbackIndex]!;
   };
 
   const close = (): void => {
@@ -723,6 +742,12 @@ async function handleInit(parsed: ParsedArgs): Promise<void> {
     const fallback = await loadConfig();
     existing = fallback.config;
   }
+  const existingCreator = safePromptFallback(existing.creator);
+  const existingTool = safePromptFallback(existing.tool);
+  const existingDefaultInbox = safePromptFallback(existing.defaultInbox);
+  const existingIntent = safePromptFallback(existing.intent);
+  const existingPrivateKeyPath = safePromptFallback(existing.privateKeyPath);
+  const existingPublicKeyPath = safePromptFallback(existing.publicKeyPath);
   const prompter = createPrompter();
 
   try {
@@ -732,8 +757,8 @@ async function handleInit(parsed: ParsedArgs): Promise<void> {
       0,
     );
 
-    let privateKeyPath = existing.privateKeyPath;
-    let publicKeyPath = existing.publicKeyPath;
+    let privateKeyPath = existingPrivateKeyPath;
+    let publicKeyPath = existingPublicKeyPath;
     let creatorFromKey: string | undefined;
 
     if (keyChoice.startsWith("Generate")) {
@@ -756,7 +781,7 @@ async function handleInit(parsed: ParsedArgs): Promise<void> {
     } else {
       while (true) {
         const candidate = await prompter.ask("Private key path (file)", {
-          fallback: existing.privateKeyPath,
+          fallback: existingPrivateKeyPath,
           required: true,
           normalize: normalizePathInput,
           hint: "Enter or y = default",
@@ -777,7 +802,7 @@ async function handleInit(parsed: ParsedArgs): Promise<void> {
     }
 
     const creator = await prompter.ask("Creator ID (URL or pubkey)", {
-      fallback: existing.creator ?? creatorFromKey,
+      fallback: existingCreator ?? creatorFromKey,
       required: true,
       hint: "Enter or y = default",
       validate: (value) => {
@@ -790,7 +815,7 @@ async function handleInit(parsed: ParsedArgs): Promise<void> {
     });
 
     const tool = await prompter.ask("Default tool (optional)", {
-      fallback: existing.tool ?? "",
+      fallback: existingTool ?? "",
       allowSkip: true,
       hint: "Enter or n = skip",
     });
@@ -805,19 +830,22 @@ async function handleInit(parsed: ParsedArgs): Promise<void> {
     if (intentChoice.startsWith("fixed")) {
       intentPolicy = "fixed";
       const fixedIntent = await prompter.ask("Fixed intent label", {
-        fallback: existing.intent ?? "",
+        fallback: existingIntent ?? "",
         allowSkip: true,
         hint: "Enter or n = skip",
       });
       if (fixedIntent) {
         intent = fixedIntent;
+      } else {
+        // If the user chose "fixed" but provided no label, fall back to omitting intent.
+        intentPolicy = "none";
       }
     } else if (intentChoice.startsWith("filename")) {
       intentPolicy = "filename";
     }
 
     const defaultInbox = await prompter.ask("Default watch folder (path)", {
-      fallback: existing.defaultInbox ?? path.join(os.homedir(), "ARR-Inbox"),
+      fallback: existingDefaultInbox ?? path.join(os.homedir(), "ARR-Inbox"),
       normalize: normalizePathInput,
       allowSkip: true,
       hint: "Enter or y = default",
@@ -866,9 +894,9 @@ async function handleInit(parsed: ParsedArgs): Promise<void> {
         `Private key: ${privateKeyPath}`,
         publicKeyPath ? `Public key: ${publicKeyPath}` : "",
         "Next: run `arr attest <file>` or `arr watch`.",
-        "",
       ].filter(Boolean).join("\n"),
     );
+    process.stdout.write("\n");
   } finally {
     prompter.close();
   }

@@ -19,6 +19,7 @@ Last updated: 2026-02-05
 | `docs/CLI-HOWTO.md` | Creator-friendly CLI onboarding (guided setup, drag-and-drop, batch workflows) |
 | `docs/RELEASE-v0.1.0-m1.md` | M1 release summary and operational quickstart |
 | `docs/RELEASE-v0.1.6.md` | CLI UX stabilization + publish fix notes |
+| `docs/RELEASE-v0.1.7.md` | CLI onboarding prompt hardening + safer defaults |
 | `docs/PUBLISHING.md` | npm publication policy, compatibility rules, and release gates |
 | `docs/METRICS.md` | Adoption and contributor throughput tracking |
 | `CONTRIBUTING.md` | Contributor workflow and guardrails |
