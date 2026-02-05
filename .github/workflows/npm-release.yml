@@ -67,7 +67,15 @@ jobs:
 
       - name: Publish packages
         if: ${{ inputs.publish }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          if [ -n "$NODE_AUTH_TOKEN" ]; then
+            npm config set //registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN
+          else
+            echo "NPM_TOKEN not set; attempting OIDC publish."
+          fi
+
           SDK_VERSION=$(node -p "require('./packages/arr-core/package.json').version")
           CLI_VERSION=$(node -p "require('./packages/arr-cli/package.json').version")
 
