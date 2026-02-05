@@ -12,6 +12,7 @@ Last updated: 2026-02-05
 | `SPEC.md` | Canonical protocol text (`arr/0.1`) |
 | `spec.html` | Rendered spec page for the website (must mirror `SPEC.md`) |
 | `creators.html` | Creator-facing onboarding docs |
+| `cli.html` | Creator CLI onboarding (terminal-first quickstart + drag-and-drop workflows) |
 | `platforms.html` | Platform integration guidance |
 | `sdk.html` | SDK-facing documentation and examples |
 | `docs/IMPLEMENTATION.md` | M1 implementation and CLI operational guide |

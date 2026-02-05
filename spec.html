@@ -76,16 +76,74 @@
       100% { transform: translateX(-50%); }
     }
 
+    /* Announcement bar */
+    .announcement {
+      position: fixed;
+      top: 2.5rem;
+      left: 0;
+      right: 0;
+      height: 2.25rem;
+      background: rgba(196, 185, 152, 0.06);
+      border-bottom: 1px solid var(--border);
+      z-index: 99;
+    }
+
+    .announcement-link {
+      height: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      color: var(--fg);
+      text-decoration: none;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .announcement-link:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .announcement-badge {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 0.15rem 0.4rem;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .announcement-text {
+      min-width: 0;
+      flex: 1 1 auto;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--muted);
+    }
+
+    .announcement-cta {
+      flex: 0 0 auto;
+      color: var(--accent);
+    }
+
     /* Header */
     header {
       position: fixed;
-      top: 2.5rem;
+      top: 4.75rem;
       left: 0;
       right: 0;
       background: var(--bg);
       border-bottom: 1px solid var(--border);
       padding: 1rem 2rem;
-      z-index: 99;
+      z-index: 98;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -522,6 +580,10 @@
         gap: 0.5rem;
       }
 
+      .announcement-link {
+        padding: 0 1rem;
+      }
+
       .logo-symbol {
         font-size: 1.1rem;
       }
@@ -582,6 +644,15 @@
       <span>IMPLEMENT FREELY</span>
       <span>NO PERMISSION REQUIRED</span>
     </div>
+  </div>
+
+  <!-- Announcement Bar -->
+  <div class="announcement" role="region" aria-label="Announcement">
+    <a class="announcement-link" href="cli.html">
+      <span class="announcement-badge">New</span>
+      <span class="announcement-text">ARR CLI v0.1.6: drag &amp; drop attestation is live.</span>
+      <span class="announcement-cta">CLI QUICKSTART →</span>
+    </a>
   </div>
 
   <header>
