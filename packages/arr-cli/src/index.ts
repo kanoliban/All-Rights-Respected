@@ -331,12 +331,12 @@ function getStringOption(parsed: ParsedArgs, key: string): string | undefined {
 }
 
 type AskOptions = {
-  fallback?: string;
+  fallback?: string | undefined;
   required?: boolean;
   allowSkip?: boolean;
-  normalize?: (value: string) => string;
-  validate?: (value: string) => string | undefined;
-  hint?: string;
+  normalize?: ((value: string) => string) | undefined;
+  validate?: ((value: string) => string | undefined) | undefined;
+  hint?: string | undefined;
 };
 
 type Prompter = {
