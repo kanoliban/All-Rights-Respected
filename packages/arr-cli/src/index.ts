@@ -321,6 +321,18 @@ function createPrompter(): Prompter {
   return { ask, choose, close };
 }
 
+function printBanner(): void {
+  const lines = [
+    "   _    ____  ____",
+    "  / \\  |  _ \\|  _ \\",
+    " / _ \\ | |_) | |_) |",
+    "/ ___ \\|  _ <|  _ <",
+    "/_/   \\_\\_| \\_\\_| \\_\\",
+    "",
+  ];
+  process.stdout.write(lines.join("\n"));
+}
+
 function getRequiredStringOption(parsed: ParsedArgs, key: string): string {
   const value = getStringOption(parsed, key);
 
@@ -608,16 +620,20 @@ async function handleInit(parsed: ParsedArgs): Promise<void> {
   }
 }
 
-async function handleInteractive(): Promise<void> {
+async function handleInteractive(showBanner = true): Promise<void> {
   if (!isInteractive()) {
     process.stdout.write(getHelp());
     return;
   }
 
+  if (showBanner) {
+    printBanner();
+  }
+
   const configState = await loadConfig();
   if (configState.source === "none") {
     await handleInit({ command: "init", positionals: [], options: {}, wantsJson: false });
-    return handleInteractive();
+    return handleInteractive(false);
   }
 
   const prompter = createPrompter();
