@@ -6,6 +6,7 @@ import { access, mkdir, readdir, readFile, stat, writeFile } from "node:fs/promi
 import os from "node:os";
 import path from "node:path";
 import { createInterface } from "node:readline/promises";
+import { fileURLToPath } from "node:url";
 import {
   ArrError,
   detectFileFormat,
@@ -51,6 +52,11 @@ type ExtractionResult = {
   format?: "png" | "jpeg";
 };
 
+type DirectoryFilter = {
+  mode: "all" | "types" | "images";
+  exts?: Set<string>;
+};
+
 class CliError extends Error {
   readonly code: string;
 
@@ -60,6 +66,10 @@ class CliError extends Error {
     this.code = code;
   }
 }
+
+const DEFAULT_IMAGE_EXTS = new Set([".png", ".jpg", ".jpeg"]);
+const YES_VALUES = new Set(["y", "yes"]);
+const NO_VALUES = new Set(["n", "no"]);
 
 function parseArgs(argv: string[]): ParsedArgs {
   let command: Command | undefined;
@@ -85,6 +95,16 @@ function parseArgs(argv: string[]): ParsedArgs {
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index];
     if (token === undefined) {
+      continue;
+    }
+
+    if (token === "-h") {
+      options.help = true;
+      continue;
+    }
+
+    if (token === "-v") {
+      options.version = true;
       continue;
     }
 
@@ -130,8 +150,9 @@ function getHelp(command?: Command): string {
       "  watch    Auto-attest files dropped into a folder",
       "",
       "Global options:",
-      "  --json   Emit stable JSON envelopes",
-      "  --help   Show command help",
+      "  --json     Emit stable JSON envelopes",
+      "  --help     Show command help",
+      "  --version  Show CLI version",
       "",
       "Run `arr <command> --help` for detailed usage.",
       "",
@@ -162,6 +183,8 @@ function getHelp(command?: Command): string {
       "  --mode <auto|sidecar|metadata>",
       "  --out <path>              Output path (file or directory)",
       "  --recursive               Attest all files in a directory",
+      "  --all                     Include all file types when attesting a directory",
+      "  --types <exts>            Comma-separated extensions (e.g. png,jpg)",
       "  --json                    Emit JSON output",
       "",
       "Tip:",
@@ -173,10 +196,11 @@ function getHelp(command?: Command): string {
   if (command === "init") {
     return [
       "Usage:",
-      "  arr init [--global]",
+      "  arr init [--global|--local]",
       "",
       "Options:",
-      "  --global                  Store config in ~/.arrrc.json",
+      "  --global                  Store config in ~/.arr/config.json (default)",
+      "  --local                   Store config in ./.arr/config.json",
       "",
     ].join("\n");
   }
@@ -204,6 +228,8 @@ function getHelp(command?: Command): string {
       "  --tool <name/version>     Tool marker",
       "  --expires <YYYY-MM-DD>    Expiry date",
       "  --mode <auto|sidecar|metadata>",
+      "  --all                     Include all file types (default is images only)",
+      "  --types <exts>            Comma-separated extensions (e.g. png,jpg)",
       "  --json                    Emit JSON output",
       "",
       "Tip:",
@@ -223,12 +249,21 @@ function getHelp(command?: Command): string {
   ].join("\n");
 }
 
-const CONFIG_FILENAME = ".arrrc.json";
+const CONFIG_DIRNAME = ".arr";
+const CONFIG_FILENAME = "config.json";
+const LEGACY_CONFIG_FILENAME = ".arrrc.json";
 
-function getConfigPaths(): { local: string; global: string } {
+function getConfigPaths(): {
+  local: string;
+  global: string;
+  legacyLocal: string;
+  legacyGlobal: string;
+} {
   return {
-    local: path.join(process.cwd(), CONFIG_FILENAME),
-    global: path.join(os.homedir(), CONFIG_FILENAME),
+    local: path.join(process.cwd(), CONFIG_DIRNAME, CONFIG_FILENAME),
+    global: path.join(os.homedir(), CONFIG_DIRNAME, CONFIG_FILENAME),
+    legacyLocal: path.join(process.cwd(), LEGACY_CONFIG_FILENAME),
+    legacyGlobal: path.join(os.homedir(), LEGACY_CONFIG_FILENAME),
   };
 }
 
@@ -255,8 +290,13 @@ async function readConfigFile(filePath: string): Promise<ArrConfig | null> {
   }
 }
 
-async function loadConfig(): Promise<{ config: ArrConfig; path?: string; source: "local" | "global" | "none" }> {
+async function loadConfig(): Promise<{
+  config: ArrConfig;
+  path?: string;
+  source: "local" | "global" | "legacy-local" | "legacy-global" | "none";
+}> {
   const paths = getConfigPaths();
+
   const localConfig = await readConfigFile(paths.local);
   if (localConfig) {
     return { config: localConfig, path: paths.local, source: "local" };
@@ -265,6 +305,16 @@ async function loadConfig(): Promise<{ config: ArrConfig; path?: string; source:
   const globalConfig = await readConfigFile(paths.global);
   if (globalConfig) {
     return { config: globalConfig, path: paths.global, source: "global" };
+  }
+
+  const legacyLocal = await readConfigFile(paths.legacyLocal);
+  if (legacyLocal) {
+    return { config: legacyLocal, path: paths.legacyLocal, source: "legacy-local" };
+  }
+
+  const legacyGlobal = await readConfigFile(paths.legacyGlobal);
+  if (legacyGlobal) {
+    return { config: legacyGlobal, path: paths.legacyGlobal, source: "legacy-global" };
   }
 
   return { config: {}, source: "none" };
@@ -280,8 +330,17 @@ function getStringOption(parsed: ParsedArgs, key: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+type AskOptions = {
+  fallback?: string;
+  required?: boolean;
+  allowSkip?: boolean;
+  normalize?: (value: string) => string;
+  validate?: (value: string) => string | undefined;
+  hint?: string;
+};
+
 type Prompter = {
-  ask: (prompt: string, fallback?: string) => Promise<string>;
+  ask: (prompt: string, options?: AskOptions) => Promise<string>;
   choose: (prompt: string, options: string[], fallbackIndex: number) => Promise<string>;
   close: () => void;
 };
@@ -290,23 +349,83 @@ function isInteractive(): boolean {
   return Boolean(process.stdin.isTTY && process.stdout.isTTY);
 }
 
+function parseYesNo(input: string): boolean | null {
+  const normalized = input.trim().toLowerCase();
+  if (YES_VALUES.has(normalized)) return true;
+  if (NO_VALUES.has(normalized)) return false;
+  return null;
+}
+
 function createPrompter(): Prompter {
   const rl = createInterface({
     input: process.stdin,
     output: process.stdout,
   });
 
-  const ask = async (prompt: string, fallback?: string): Promise<string> => {
+  const ask = async (prompt: string, options: AskOptions = {}): Promise<string> => {
+    const fallback = options.fallback;
     const suffix = fallback ? ` (${fallback})` : "";
-    const answer = await rl.question(`${prompt}${suffix}: `);
-    const trimmed = answer.trim();
-    if (trimmed) return trimmed;
-    return fallback ?? "";
+    const hint = options.hint ? ` ${options.hint}` : "";
+
+    while (true) {
+      const answer = await rl.question(`${prompt}${suffix}:${hint} `);
+      const trimmed = answer.trim();
+      if (!trimmed) {
+        if (fallback) return fallback;
+        if (options.required) {
+          process.stdout.write("This value is required. Please enter a value.\n");
+          continue;
+        }
+        return "";
+      }
+
+      const yesNo = parseYesNo(trimmed);
+      if (yesNo === true) {
+        if (fallback) return fallback;
+        if (options.required) {
+          process.stdout.write("This value is required. Please enter a value.\n");
+          continue;
+        }
+        return "";
+      }
+      if (yesNo === false) {
+        if (options.allowSkip) {
+          return "";
+        }
+        if (options.required) {
+          process.stdout.write("This value is required. Please enter a value.\n");
+          continue;
+        }
+        return "";
+      }
+
+      const normalized = options.normalize ? options.normalize(trimmed) : trimmed;
+      if (options.validate) {
+        const error = options.validate(normalized);
+        if (error) {
+          process.stdout.write(`${error}\n`);
+          continue;
+        }
+      }
+      return normalized;
+    }
   };
 
   const choose = async (prompt: string, options: string[], fallbackIndex: number): Promise<string> => {
     const lines = options.map((option, index) => `  ${index + 1}) ${option}`);
-    const answer = await ask(`${prompt}\n${lines.join("\n")}`, String(fallbackIndex + 1));
+    const answer = await ask(`${prompt}\n${lines.join("\n")}`, {
+      fallback: String(fallbackIndex + 1),
+      hint: "Enter a number.",
+    });
+    const normalized = answer.trim().toLowerCase();
+    const yesNo = parseYesNo(normalized);
+    if (yesNo !== null && options.some((option) => option.toLowerCase() === "yes") && options.some((option) => option.toLowerCase() === "no")) {
+      if (yesNo === true) {
+        return options.find((option) => option.toLowerCase() === "yes") ?? options[fallbackIndex]!;
+      }
+      return options.find((option) => option.toLowerCase() === "no") ?? options[fallbackIndex]!;
+    }
+
     const parsed = Number.parseInt(answer, 10);
     if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= options.length) {
       return options[parsed - 1] ?? options[fallbackIndex]!;
@@ -321,6 +440,53 @@ function createPrompter(): Prompter {
   return { ask, choose, close };
 }
 
+function stripWrappingQuotes(value: string): string {
+  const trimmed = value.trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1);
+  }
+  return trimmed;
+}
+
+function normalizePathInput(value: string): string {
+  const stripped = stripWrappingQuotes(value);
+  if (stripped.startsWith("~")) {
+    return path.join(os.homedir(), stripped.slice(1));
+  }
+  return stripped;
+}
+
+function parseTypesOption(raw?: string): Set<string> | null {
+  if (!raw) return null;
+  const parts = raw
+    .split(",")
+    .map((part) => part.trim().toLowerCase())
+    .filter(Boolean)
+    .map((part) => (part.startsWith(".") ? part : `.${part}`));
+  if (parts.length === 0) {
+    return null;
+  }
+  return new Set(parts);
+}
+
+function resolveDirectoryFilter(parsed: ParsedArgs): DirectoryFilter {
+  if (parsed.options.all === true) {
+    return { mode: "all" };
+  }
+  const types = parseTypesOption(getStringOption(parsed, "types"));
+  if (types && types.size > 0) {
+    return { mode: "types", exts: types };
+  }
+  return { mode: "images", exts: DEFAULT_IMAGE_EXTS };
+}
+
+function hasSupportedExtension(filePath: string, exts: Set<string>): boolean {
+  return exts.has(path.extname(filePath).toLowerCase());
+}
+
 function printBanner(): void {
   const lines = [
     "   _    ____  ____",
@@ -333,6 +499,19 @@ function printBanner(): void {
   process.stdout.write(lines.join("\n"));
 }
 
+async function printVersion(): Promise<void> {
+  try {
+    const currentFile = fileURLToPath(import.meta.url);
+    const pkgPath = path.join(path.dirname(currentFile), "..", "package.json");
+    const raw = await readFile(pkgPath, "utf8");
+    const parsed = JSON.parse(raw) as { version?: string };
+    const version = parsed.version ?? "unknown";
+    process.stdout.write(`arr v${version}\n`);
+  } catch {
+    process.stdout.write("arr (version unknown)\n");
+  }
+}
+
 function getRequiredStringOption(parsed: ParsedArgs, key: string): string {
   const value = getStringOption(parsed, key);
 
@@ -343,11 +522,35 @@ function getRequiredStringOption(parsed: ParsedArgs, key: string): string {
   return value;
 }
 
+async function suggestFileMatch(filePath: string): Promise<string | null> {
+  const parsed = path.parse(filePath);
+  if (!parsed.dir || parsed.ext) {
+    return null;
+  }
+  try {
+    const entries = await readdir(parsed.dir);
+    const prefix = `${parsed.name}.`;
+    const matches = entries.filter((entry) => entry.startsWith(prefix));
+    if (matches.length === 0) {
+      return null;
+    }
+    const suggestions = matches.slice(0, 3).map((entry) => path.join(parsed.dir, entry));
+    if (matches.length > 3) {
+      return `${suggestions.join(", ")} …`;
+    }
+    return suggestions.join(", ");
+  } catch {
+    return null;
+  }
+}
+
 async function ensureFileExists(filePath: string): Promise<void> {
   try {
     await access(filePath);
   } catch {
-    throw new CliError("file_not_found", `File not found: ${filePath}`);
+    const suggestion = await suggestFileMatch(filePath);
+    const suffix = suggestion ? `\nDid you mean: ${suggestion}` : "";
+    throw new CliError("file_not_found", `File not found: ${filePath}${suffix}`);
   }
 }
 
@@ -405,7 +608,15 @@ function resolveCreator(parsed: ParsedArgs, config: ArrConfig): string {
   if (!creator) {
     throw new CliError("missing_flag", "Missing required option --creator. Run `arr init` to set a default.");
   }
-  return creator;
+  const normalized = creator.trim();
+  const lowered = normalized.toLowerCase();
+  if (YES_VALUES.has(lowered) || NO_VALUES.has(lowered)) {
+    throw new CliError(
+      "invalid_creator",
+      "Creator ID must be a URL or pubkey (e.g. https://example.com or pubkey:ed25519:...).",
+    );
+  }
+  return normalized;
 }
 
 function resolvePrivateKeyPath(parsed: ParsedArgs, config: ArrConfig): string {
@@ -413,7 +624,7 @@ function resolvePrivateKeyPath(parsed: ParsedArgs, config: ArrConfig): string {
   if (!privateKeyPath) {
     throw new CliError("missing_flag", "Missing required option --private-key. Run `arr init` to set a default.");
   }
-  return privateKeyPath;
+  return normalizePathInput(privateKeyPath);
 }
 
 function resolveTool(parsed: ParsedArgs, config: ArrConfig): string | undefined {
@@ -506,8 +717,12 @@ async function handleInit(parsed: ParsedArgs): Promise<void> {
   }
 
   const paths = getConfigPaths();
-  const configPath = parsed.options.global === true ? paths.global : paths.local;
-  const existing = (await readConfigFile(configPath)) ?? {};
+  const configPath = parsed.options.local === true ? paths.local : paths.global;
+  let existing = await readConfigFile(configPath);
+  if (!existing) {
+    const fallback = await loadConfig();
+    existing = fallback.config;
+  }
   const prompter = createPrompter();
 
   try {
@@ -523,7 +738,12 @@ async function handleInit(parsed: ParsedArgs): Promise<void> {
 
     if (keyChoice.startsWith("Generate")) {
       const defaultKeysDir = path.join(os.homedir(), ".arr", "keys");
-      const keysDir = await prompter.ask("Key directory", defaultKeysDir);
+      const keysDir = await prompter.ask("Key directory (path)", {
+        fallback: defaultKeysDir,
+        required: true,
+        normalize: normalizePathInput,
+        hint: "Enter or y = default",
+      });
       await mkdir(keysDir, { recursive: true });
 
       const { privateKeyPem, publicKeyPem, creator } = generateKeyPair();
@@ -534,19 +754,46 @@ async function handleInit(parsed: ParsedArgs): Promise<void> {
       await writeFile(privateKeyPath, privateKeyPem, { encoding: "utf8", mode: 0o600 });
       await writeFile(publicKeyPath, publicKeyPem, "utf8");
     } else {
-      privateKeyPath = await prompter.ask("Private key path", existing.privateKeyPath);
+      while (true) {
+        const candidate = await prompter.ask("Private key path (file)", {
+          fallback: existing.privateKeyPath,
+          required: true,
+          normalize: normalizePathInput,
+          hint: "Enter or y = default",
+        });
+        try {
+          await ensureFileExists(candidate);
+          privateKeyPath = candidate;
+          break;
+        } catch (error) {
+          const normalized = normalizeError(error);
+          process.stdout.write(`Error [${normalized.code}]: ${normalized.message}\n`);
+        }
+      }
     }
 
     if (!privateKeyPath) {
       throw new CliError("missing_flag", "Private key path is required.");
     }
 
-    const creator = await prompter.ask("Creator ID (URL or pubkey)", existing.creator ?? creatorFromKey);
-    if (!creator) {
-      throw new CliError("missing_flag", "Creator ID is required.");
-    }
+    const creator = await prompter.ask("Creator ID (URL or pubkey)", {
+      fallback: existing.creator ?? creatorFromKey,
+      required: true,
+      hint: "Enter or y = default",
+      validate: (value) => {
+        const lowered = value.trim().toLowerCase();
+        if (YES_VALUES.has(lowered) || NO_VALUES.has(lowered)) {
+          return "Please enter a URL or pubkey (not yes/no).";
+        }
+        return undefined;
+      },
+    });
 
-    const tool = await prompter.ask("Default tool (optional)", existing.tool ?? "");
+    const tool = await prompter.ask("Default tool (optional)", {
+      fallback: existing.tool ?? "",
+      allowSkip: true,
+      hint: "Enter or n = skip",
+    });
     const intentChoice = await prompter.choose(
       "Default intent behavior",
       ["none (omit intent)", "fixed (one label for all files)", "filename (use file name)"],
@@ -557,7 +804,11 @@ async function handleInit(parsed: ParsedArgs): Promise<void> {
 
     if (intentChoice.startsWith("fixed")) {
       intentPolicy = "fixed";
-      const fixedIntent = await prompter.ask("Fixed intent label", existing.intent ?? "");
+      const fixedIntent = await prompter.ask("Fixed intent label", {
+        fallback: existing.intent ?? "",
+        allowSkip: true,
+        hint: "Enter or n = skip",
+      });
       if (fixedIntent) {
         intent = fixedIntent;
       }
@@ -565,10 +816,12 @@ async function handleInit(parsed: ParsedArgs): Promise<void> {
       intentPolicy = "filename";
     }
 
-    const defaultInbox = await prompter.ask(
-      "Default watch folder",
-      existing.defaultInbox ?? path.join(os.homedir(), "ARR-Inbox"),
-    );
+    const defaultInbox = await prompter.ask("Default watch folder (path)", {
+      fallback: existing.defaultInbox ?? path.join(os.homedir(), "ARR-Inbox"),
+      normalize: normalizePathInput,
+      allowSkip: true,
+      hint: "Enter or y = default",
+    });
 
     const modeChoice = await prompter.choose("Default embed mode", ["auto", "metadata", "sidecar"], 0);
 
@@ -612,6 +865,7 @@ async function handleInit(parsed: ParsedArgs): Promise<void> {
         `Creator: ${creator}`,
         `Private key: ${privateKeyPath}`,
         publicKeyPath ? `Public key: ${publicKeyPath}` : "",
+        "Next: run `arr attest <file>` or `arr watch`.",
         "",
       ].filter(Boolean).join("\n"),
     );
@@ -634,6 +888,12 @@ async function handleInteractive(showBanner = true): Promise<void> {
   if (configState.source === "none") {
     await handleInit({ command: "init", positionals: [], options: {}, wantsJson: false });
     return handleInteractive(false);
+  }
+  if (configState.source === "legacy-local" || configState.source === "legacy-global") {
+    const legacyPath = configState.path ?? "legacy config";
+    process.stdout.write(
+      `Found legacy ARR config at ${legacyPath}. Run 'arr init' to upgrade to ~/.arr/config.json.\n`,
+    );
   }
 
   const prompter = createPrompter();
@@ -664,7 +924,11 @@ async function handleInteractive(showBanner = true): Promise<void> {
 
     if (action === "Watch a folder (drag & drop)") {
       const defaultInbox = config.defaultInbox ?? path.join(os.homedir(), "ARR-Inbox");
-      const dir = await prompter.ask("Watch folder", defaultInbox);
+      const dir = await prompter.ask("Watch folder (path)", {
+        fallback: defaultInbox,
+        normalize: normalizePathInput,
+        hint: "Enter or y = default",
+      });
       await handleWatch({
         command: "watch",
         positionals: [],
@@ -675,16 +939,62 @@ async function handleInteractive(showBanner = true): Promise<void> {
     }
 
     if (action === "Attest a file or folder") {
-      const inputPath = await prompter.ask("File or folder path");
+      const inputPath = await prompter.ask("File or folder path", {
+        required: true,
+        normalize: normalizePathInput,
+        hint: "Drag & drop supported",
+      });
       if (!inputPath) {
         return;
       }
-      let recursive = false;
+      let options: Record<string, string | boolean> = {};
       try {
         const stats = await stat(inputPath);
         if (stats.isDirectory()) {
-          const choice = await prompter.choose("Directory detected. Attest all files?", ["Yes", "No"], 0);
-          recursive = choice === "Yes";
+          const summary = await summarizeDirectory(inputPath);
+          if (summary.total === 0) {
+            process.stdout.write("No attestable files were found in that folder.\n");
+            return;
+          }
+
+          if (summary.imageCount === 0 && summary.otherCount > 0) {
+            const choice = await prompter.choose(
+              `Directory detected with ${summary.otherCount} non-image files. Attest all files with sidecars?`,
+              ["Yes", "No"],
+              1,
+            );
+            if (choice !== "Yes") {
+              return;
+            }
+            options = { recursive: true, all: true };
+          } else if (summary.otherCount > 0) {
+            const choice = await prompter.choose(
+              `Directory detected. ${summary.imageCount} images, ${summary.otherCount} other files.`,
+              [
+                `Images only (PNG/JPEG) — ${summary.imageCount} files (recommended)`,
+                `Everything — ${summary.total} files (sidecars for non-images)`,
+                "Cancel",
+              ],
+              0,
+            );
+            if (choice.startsWith("Images only")) {
+              options = { recursive: true, types: "png,jpg,jpeg" };
+            } else if (choice.startsWith("Everything")) {
+              options = { recursive: true, all: true };
+            } else {
+              return;
+            }
+          } else {
+            const choice = await prompter.choose(
+              `Directory detected with ${summary.imageCount} image(s). Attest all images?`,
+              ["Yes", "No"],
+              0,
+            );
+            if (choice !== "Yes") {
+              return;
+            }
+            options = { recursive: true, types: "png,jpg,jpeg" };
+          }
         }
       } catch {
         // Let handler surface errors
@@ -693,14 +1003,18 @@ async function handleInteractive(showBanner = true): Promise<void> {
       await handleAttest({
         command: "attest",
         positionals: [inputPath],
-        options: recursive ? { recursive: true } : {},
+        options,
         wantsJson: false,
       });
       return;
     }
 
     if (action === "Verify a file") {
-      const inputPath = await prompter.ask("File path");
+      const inputPath = await prompter.ask("File path", {
+        required: true,
+        normalize: normalizePathInput,
+        hint: "Drag & drop supported",
+      });
       if (!inputPath) {
         return;
       }
@@ -714,7 +1028,11 @@ async function handleInteractive(showBanner = true): Promise<void> {
     }
 
     if (action === "Extract an attestation") {
-      const inputPath = await prompter.ask("File path");
+      const inputPath = await prompter.ask("File path", {
+        required: true,
+        normalize: normalizePathInput,
+        hint: "Drag & drop supported",
+      });
       if (!inputPath) {
         return;
       }
@@ -736,7 +1054,7 @@ async function handleKeygen(parsed: ParsedArgs): Promise<void> {
     return;
   }
 
-  const outDir = getRequiredStringOption(parsed, "out-dir");
+  const outDir = normalizePathInput(getRequiredStringOption(parsed, "out-dir"));
   await mkdir(outDir, { recursive: true });
 
   const { privateKeyPem, publicKeyPem, creator } = generateKeyPair();
@@ -879,8 +1197,39 @@ async function walkDirectory(dirPath: string, files: string[]): Promise<void> {
   }
 }
 
-async function collectInputPaths(inputPath: string, recursive: boolean): Promise<string[]> {
-  const stats = await stat(inputPath);
+async function summarizeDirectory(dirPath: string): Promise<{
+  total: number;
+  imageCount: number;
+  otherCount: number;
+}> {
+  const files: string[] = [];
+  await walkDirectory(dirPath, files);
+  let imageCount = 0;
+  for (const file of files) {
+    if (hasSupportedExtension(file, DEFAULT_IMAGE_EXTS)) {
+      imageCount += 1;
+    }
+  }
+  const total = files.length;
+  return { total, imageCount, otherCount: total - imageCount };
+}
+
+async function collectInputPaths(
+  inputPath: string,
+  recursive: boolean,
+  filter: DirectoryFilter,
+): Promise<string[]> {
+  let stats;
+  try {
+    stats = await stat(inputPath);
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      const suggestion = await suggestFileMatch(inputPath);
+      const suffix = suggestion ? `\nDid you mean: ${suggestion}` : "";
+      throw new CliError("file_not_found", `File not found: ${inputPath}${suffix}`);
+    }
+    throw error;
+  }
   if (stats.isDirectory()) {
     if (!recursive) {
       throw new CliError(
@@ -890,7 +1239,22 @@ async function collectInputPaths(inputPath: string, recursive: boolean): Promise
     }
     const files: string[] = [];
     await walkDirectory(inputPath, files);
-    return files;
+    if (filter.mode === "all") {
+      return files;
+    }
+    const exts = filter.exts ?? DEFAULT_IMAGE_EXTS;
+    const filtered = files.filter((filePath) => hasSupportedExtension(filePath, exts));
+    if (filtered.length === 0) {
+      const label =
+        filter.mode === "types"
+          ? `No files matched --types (${[...exts].join(", ")}) in this directory.`
+          : "No PNG/JPEG files found in this directory.";
+      throw new CliError(
+        "no_matching_files",
+        `${label} Use --all to include every file, or --types to specify extensions.`,
+      );
+    }
+    return filtered;
   }
   if (!stats.isFile()) {
     throw new CliError("invalid_input", "Input must be a file or directory.");
@@ -904,11 +1268,12 @@ async function handleAttest(parsed: ParsedArgs): Promise<void> {
     return;
   }
 
-  const [inputPath] = parsed.positionals;
+  const [rawInputPath] = parsed.positionals;
 
-  if (!inputPath) {
+  if (!rawInputPath) {
     throw new CliError("missing_file", "Usage: arr attest <file> ...");
   }
+  const inputPath = normalizePathInput(rawInputPath);
 
   const { config } = await loadConfig();
   const creator = resolveCreator(parsed, config);
@@ -918,7 +1283,8 @@ async function handleAttest(parsed: ParsedArgs): Promise<void> {
   const privateKeyPem = await readFile(privateKeyPath, "utf8");
   const tool = resolveTool(parsed, config);
   const modeOption = resolveMode(parsed, config);
-  const outPath = getStringOption(parsed, "out");
+  const outPathRaw = getStringOption(parsed, "out");
+  const outPath = outPathRaw ? normalizePathInput(outPathRaw) : undefined;
   const recursive = parsed.options.recursive === true;
   const outputDir = recursive && outPath ? outPath : undefined;
 
@@ -926,7 +1292,13 @@ async function handleAttest(parsed: ParsedArgs): Promise<void> {
     await mkdir(outputDir, { recursive: true });
   }
 
-  const targets = await collectInputPaths(inputPath, recursive);
+  const directoryFilter = resolveDirectoryFilter(parsed);
+  const targets = await collectInputPaths(inputPath, recursive, directoryFilter);
+  if (!parsed.wantsJson && targets.length > 1 && directoryFilter.mode !== "all") {
+    process.stdout.write(
+      `Attesting ${targets.length} file(s). Use --all to include non-image files, or --types to specify extensions.\n`,
+    );
+  }
   const results: Array<{
     inputPath: string;
     mode: "metadata" | "sidecar";
@@ -1021,18 +1393,21 @@ async function handleWatch(parsed: ParsedArgs): Promise<void> {
   await ensureFileExists(privateKeyPath);
   const privateKeyPem = await readFile(privateKeyPath, "utf8");
 
-  const inputDir =
+  const inputDirRaw =
     getStringOption(parsed, "in") ?? config.defaultInbox ?? path.join(os.homedir(), "ARR-Inbox");
+  const inputDir = normalizePathInput(inputDirRaw);
   await mkdir(inputDir, { recursive: true });
   await ensureDirExists(inputDir);
 
-  const outputDir = getStringOption(parsed, "out-dir") ?? config.outputDir;
+  const outputDirRaw = getStringOption(parsed, "out-dir") ?? config.outputDir;
+  const outputDir = outputDirRaw ? normalizePathInput(outputDirRaw) : undefined;
   if (outputDir) {
     await mkdir(outputDir, { recursive: true });
   }
 
   const tool = resolveTool(parsed, config);
   const modeOption = resolveMode(parsed, config);
+  const directoryFilter = resolveDirectoryFilter(parsed);
 
   const pending = new Map<string, NodeJS.Timeout>();
 
@@ -1050,6 +1425,13 @@ async function handleWatch(parsed: ParsedArgs): Promise<void> {
     const fileName = path.basename(filePath);
     if (isSkippableFilename(fileName)) {
       return;
+    }
+
+    if (directoryFilter.mode !== "all") {
+      const exts = directoryFilter.exts ?? DEFAULT_IMAGE_EXTS;
+      if (!hasSupportedExtension(filePath, exts)) {
+        return;
+      }
     }
 
     const outputBaseDir = outputDir ?? path.dirname(filePath);
@@ -1128,6 +1510,10 @@ async function handleWatch(parsed: ParsedArgs): Promise<void> {
     if (outputDir) {
       process.stdout.write(`Output directory: ${outputDir}\n`);
     }
+    if (directoryFilter.mode !== "all") {
+      const exts = [...(directoryFilter.exts ?? DEFAULT_IMAGE_EXTS)].join(", ");
+      process.stdout.write(`Filtering to: ${exts}\n`);
+    }
     process.stdout.write("Drop files into the folder to auto-attest them.\n");
   }
 
@@ -1144,17 +1530,19 @@ async function handleVerify(parsed: ParsedArgs): Promise<void> {
     return;
   }
 
-  const [inputPath] = parsed.positionals;
+  const [rawInputPath] = parsed.positionals;
 
-  if (!inputPath) {
+  if (!rawInputPath) {
     throw new CliError("missing_file", "Usage: arr verify <file> ...");
   }
+  const inputPath = normalizePathInput(rawInputPath);
 
   await ensureFileExists(inputPath);
   const extracted = await loadSignedAttestation(inputPath);
 
   const { config } = await loadConfig();
-  const publicKeyPath = getStringOption(parsed, "public-key") ?? config.publicKeyPath;
+  const publicKeyRaw = getStringOption(parsed, "public-key") ?? config.publicKeyPath;
+  const publicKeyPath = publicKeyRaw ? normalizePathInput(publicKeyRaw) : undefined;
   let publicKeyPem: string | undefined;
 
   if (publicKeyPath) {
@@ -1198,11 +1586,12 @@ async function handleExtract(parsed: ParsedArgs): Promise<void> {
     return;
   }
 
-  const [inputPath] = parsed.positionals;
+  const [rawInputPath] = parsed.positionals;
 
-  if (!inputPath) {
+  if (!rawInputPath) {
     throw new CliError("missing_file", "Usage: arr extract <file> ...");
   }
+  const inputPath = normalizePathInput(rawInputPath);
 
   await ensureFileExists(inputPath);
 
@@ -1245,6 +1634,11 @@ function normalizeError(error: unknown): { code: string; message: string } {
 async function run(): Promise<void> {
   const parsed = parseArgs(process.argv.slice(2));
   const firstToken = process.argv.slice(2)[0];
+
+  if (parsed.options.version === true || process.argv.slice(2).includes("--version")) {
+    await printVersion();
+    return;
+  }
 
   if (parsed.options.help === true && !parsed.command) {
     process.stdout.write(getHelp());
