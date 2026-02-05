@@ -800,27 +800,30 @@
       </div>
 
       <h3>Using the CLI</h3>
-      <pre><code><span class="comment"># Current stable path: run from this repository.</span>
+      <pre><code><span class="comment"># Install the CLI from npm</span>
+npm install -g @allrightsrespected/cli
+
+<span class="comment"># Repo path (for contributors and local dev)</span>
 git clone https://github.com/kanoliban/All-Rights-Respected.git
 cd All-Rights-Respected
 npm install
 npm run build
 
-<span class="comment"># Distribution lane: package name selected for npm publication</span>
-<span class="comment"># npm install -g @allrightsrespected/cli</span>
-
 <span class="comment"># Create and embed an attestation</span>
-node packages/arr-cli/dist/index.js attest artwork.png \
+arr attest artwork.png \
   --creator <span class="string">"https://yoursite.com/@you"</span> \
   --private-key <span class="string">"./keys/arr-ed25519-private.pem"</span> \
   --intent <span class="string">"Poster design for climate campaign"</span> \
   --tool <span class="string">"midjourney/6.1"</span>
 
 <span class="comment"># Verify an existing attestation</span>
-node packages/arr-cli/dist/index.js verify artwork.png</code></pre>
+arr verify artwork.png</code></pre>
 
       <h3>Using the SDK</h3>
-      <pre><code><span class="comment">// Final SDK package name selected for distribution lane.</span>
+      <pre><code><span class="comment">// Install the SDK</span>
+npm install @allrightsrespected/sdk
+
+<span class="comment">// Use the SDK</span>
 <span class="keyword">import</span> {
   signAttestation,
   embedAttestationInMetadata,

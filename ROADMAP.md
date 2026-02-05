@@ -64,8 +64,8 @@ Outcome: ARR is publication-ready with explicit release gates.
 - [x] prepare package naming/publication policy and preflight checks (`docs/PUBLISHING.md`)
 - [x] add manual npm release workflow (`.github/workflows/npm-release.yml`)
 - [x] finalize public package names (`@allrightsrespected/sdk`, `@allrightsrespected/cli`)
-- [ ] verify npm scope ownership and maintainer auth for first publish
-- [ ] publish stable npm packages
+- [x] verify npm scope ownership and maintainer auth for first publish
+- [x] publish stable npm packages
 
 Exit criteria:
 - tag-based release flow is documented and automatable
@@ -75,7 +75,7 @@ Exit criteria:
 
 Outcome: platform and tool developers can integrate ARR without custom wrappers.
 
-- [ ] publish installable JS/TS core + CLI packages
+- [x] publish installable JS/TS core + CLI packages
 - [ ] add browser-facing usage examples and API cookbook
 - [ ] evaluate helper API additions (`createAttestation`, adapter convenience methods) without breaking `arr/0.1` semantics
 - [ ] expand format support beyond PNG/JPEG based on adopter demand

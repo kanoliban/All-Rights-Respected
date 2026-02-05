@@ -78,9 +78,12 @@ All of that is useful.
 ## M1 reference implementation (in this repo)
 
 Current implementation status is build-first and in-repo.
-Distribution package names are finalized as `@allrightsrespected/sdk` and `@allrightsrespected/cli`, with first npm publication pending scope/auth verification.
+Published npm packages: `@allrightsrespected/sdk` and `@allrightsrespected/cli` (v0.1.0).
 
 ```bash
+npm install -g @allrightsrespected/cli
+npm install @allrightsrespected/sdk
+
 npm install
 npm run build
 npm test
@@ -89,11 +92,21 @@ npm test
 CLI location and examples:
 
 ```bash
+arr keygen --out-dir ./keys
+arr attest ./artwork.png --creator "pubkey:ed25519:..." --private-key ./keys/arr-ed25519-private.pem --mode auto
+arr verify ./artwork.png --json
+arr extract ./artwork.png --json
+
 node packages/arr-cli/dist/index.js keygen --out-dir ./keys
 node packages/arr-cli/dist/index.js attest ./artwork.png --creator "pubkey:ed25519:..." --private-key ./keys/arr-ed25519-private.pem --mode auto
 node packages/arr-cli/dist/index.js verify ./artwork.png --json
 node packages/arr-cli/dist/index.js extract ./artwork.png --json
 ```
+
+Known limitations (M1):
+- Ed25519 only
+- PNG/JPEG metadata + sidecar only
+- No browser bundles yet
 
 ---
 

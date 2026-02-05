@@ -710,6 +710,21 @@
   };
 }</code></pre>
 
+      <div class="note">
+        <div class="note-title">EXPECTED JSON SHAPE</div>
+        <pre><code>{
+  "hasAttestation": true,
+  "valid": true,
+  "expired": false,
+  "attestation": {
+    "version": "arr/0.1",
+    "id": "uuid",
+    "created": "2026-02-04T04:12:34.000Z",
+    "creator": "https://yourplatform.com/users/123"
+  }
+}</code></pre>
+      </div>
+
       <div class="badge-example">
         <div class="arr-badge">
           <span class="arr-badge-symbol">&#9398;</span><span class="arr-badge-symbol">&#9415;</span><span class="arr-badge-symbol">&#9415;</span>
@@ -814,7 +829,8 @@
       <p>Ready to integrate? Here's how to begin:</p>
 
       <ol>
-        <li>Clone this repository and build local packages: <code>npm install && npm run build</code></li>
+        <li>Install packages: <code>npm install @allrightsrespected/sdk</code> and <code>npm install -g @allrightsrespected/cli</code> (CLI command: <code>arr</code>)</li>
+        <li>Optional for contributors: build from source with <code>npm install && npm run build</code></li>
         <li>Start with Level 1: detection and display</li>
         <li>Test with <code>packages/arr-cli</code> and conformance fixtures in <code>fixtures/conformance/v0.1</code></li>
         <li>Gradually expand to Levels 2 and 3 based on user demand</li>
