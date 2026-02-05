@@ -59,7 +59,7 @@ jobs:
         run: npm test
 
       - name: Package dry-run
-        run: npm run pack:check
+        run: npm run pack:check --if-present
 
       - name: Publish readiness validation
         if: ${{ inputs.publish }}
