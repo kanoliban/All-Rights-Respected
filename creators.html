@@ -801,12 +801,8 @@
 
       <h3>Drag &amp; Drop (Hot Folder)</h3>
       <pre><code><span class="comment"># One-time setup</span>
-mkdir -p ~/ARR-Inbox
-arr watch --in ~/ARR-Inbox \
-  --creator <span class="string">"https://yoursite.com/@you"</span> \
-  --private-key <span class="string">"./keys/arr-ed25519-private.pem"</span> \
-  --intent <span class="string">"SMS logo"</span> \
-  --tool <span class="string">"canva"</span>
+arr init
+arr watch
 
 <span class="comment"># Then drag files into ~/ARR-Inbox</span>
 <span class="comment"># PNG/JPEG => .attested copies, other files => .arr sidecars</span></code></pre>
@@ -822,11 +818,11 @@ npm install
 npm run build
 
 <span class="comment"># Create and embed an attestation</span>
-arr attest artwork.png \
-  --creator <span class="string">"https://yoursite.com/@you"</span> \
-  --private-key <span class="string">"./keys/arr-ed25519-private.pem"</span> \
-  --intent <span class="string">"Poster design for climate campaign"</span> \
-  --tool <span class="string">"midjourney/6.1"</span>
+arr init
+arr attest artwork.png
+
+<span class="comment"># Bulk attest a folder</span>
+arr attest ./assets --recursive
 
 <span class="comment"># Verify an existing attestation</span>
 arr verify artwork.png</code></pre>

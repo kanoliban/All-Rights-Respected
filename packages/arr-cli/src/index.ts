@@ -2,8 +2,10 @@
 
 import { randomUUID } from "node:crypto";
 import { watch } from "node:fs";
-import { access, mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { access, mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
+import { createInterface } from "node:readline/promises";
 import {
   ArrError,
   detectFileFormat,
@@ -19,13 +21,27 @@ import {
   type SignedAttestation,
 } from "@allrightsrespected/sdk";
 
-type Command = "keygen" | "attest" | "verify" | "extract" | "watch";
+type Command = "keygen" | "attest" | "verify" | "extract" | "watch" | "init";
 
 type ParsedArgs = {
   command: Command | undefined;
   positionals: string[];
   options: Record<string, string | boolean>;
   wantsJson: boolean;
+};
+
+type IntentPolicy = "none" | "fixed" | "filename";
+
+type ArrConfig = {
+  creator?: string;
+  privateKeyPath?: string;
+  publicKeyPath?: string;
+  defaultInbox?: string;
+  outputDir?: string;
+  tool?: string;
+  intentPolicy?: IntentPolicy;
+  intent?: string;
+  defaultMode?: "auto" | "sidecar" | "metadata";
 };
 
 type ExtractionResult = {
@@ -56,7 +72,8 @@ function parseArgs(argv: string[]): ParsedArgs {
     firstToken === "attest" ||
     firstToken === "verify" ||
     firstToken === "extract" ||
-    firstToken === "watch"
+    firstToken === "watch" ||
+    firstToken === "init"
   ) {
     command = firstToken;
     tokens = argv.slice(1);
@@ -105,6 +122,7 @@ function getHelp(command?: Command): string {
       "  arr <command> [options]",
       "",
       "Commands:",
+      "  init     Interactive setup for creators",
       "  keygen   Generate an Ed25519 keypair",
       "  attest   Sign and attach an ARR attestation",
       "  verify   Verify ARR metadata or sidecar",
@@ -135,15 +153,30 @@ function getHelp(command?: Command): string {
   if (command === "attest") {
     return [
       "Usage:",
-      "  arr attest <file> --creator <id> --private-key <pemPath> [options]",
+      "  arr attest <file|dir> [--creator <id>] [--private-key <pemPath>] [options]",
       "",
       "Options:",
       "  --intent <text>           Creative intent",
       "  --tool <name/version>     Tool marker",
       "  --expires <YYYY-MM-DD>    Expiry date",
       "  --mode <auto|sidecar|metadata>",
-      "  --out <path>              Output file path",
+      "  --out <path>              Output path (file or directory)",
+      "  --recursive               Attest all files in a directory",
       "  --json                    Emit JSON output",
+      "",
+      "Tip:",
+      "  Run `arr init` once to set defaults for creator and keys.",
+      "",
+    ].join("\n");
+  }
+
+  if (command === "init") {
+    return [
+      "Usage:",
+      "  arr init [--global]",
+      "",
+      "Options:",
+      "  --global                  Store config in ~/.arrrc.json",
       "",
     ].join("\n");
   }
@@ -163,7 +196,7 @@ function getHelp(command?: Command): string {
   if (command === "watch") {
     return [
       "Usage:",
-      "  arr watch --in <dir> --creator <id> --private-key <pemPath> [options]",
+      "  arr watch [--in <dir>] [--creator <id>] [--private-key <pemPath>] [options]",
       "",
       "Options:",
       "  --out-dir <dir>          Output directory (defaults to input dir)",
@@ -175,6 +208,7 @@ function getHelp(command?: Command): string {
       "",
       "Tip:",
       "  Drag files into the watched folder to auto-attest them.",
+      "  Defaults come from `arr init`.",
       "",
     ].join("\n");
   }
@@ -189,9 +223,102 @@ function getHelp(command?: Command): string {
   ].join("\n");
 }
 
+const CONFIG_FILENAME = ".arrrc.json";
+
+function getConfigPaths(): { local: string; global: string } {
+  return {
+    local: path.join(process.cwd(), CONFIG_FILENAME),
+    global: path.join(os.homedir(), CONFIG_FILENAME),
+  };
+}
+
+function normalizeConfig(config: unknown, filePath: string): ArrConfig {
+  if (!config || typeof config !== "object") {
+    throw new CliError("invalid_config", `Invalid ARR config at ${filePath}.`);
+  }
+  return config as ArrConfig;
+}
+
+async function readConfigFile(filePath: string): Promise<ArrConfig | null> {
+  try {
+    const raw = await readFile(filePath, "utf8");
+    const parsed = JSON.parse(raw) as unknown;
+    return normalizeConfig(parsed, filePath);
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      return null;
+    }
+    if (error instanceof SyntaxError) {
+      throw new CliError("invalid_config", `Invalid JSON in ARR config: ${filePath}`);
+    }
+    throw error;
+  }
+}
+
+async function loadConfig(): Promise<{ config: ArrConfig; path?: string; source: "local" | "global" | "none" }> {
+  const paths = getConfigPaths();
+  const localConfig = await readConfigFile(paths.local);
+  if (localConfig) {
+    return { config: localConfig, path: paths.local, source: "local" };
+  }
+
+  const globalConfig = await readConfigFile(paths.global);
+  if (globalConfig) {
+    return { config: globalConfig, path: paths.global, source: "global" };
+  }
+
+  return { config: {}, source: "none" };
+}
+
+async function writeConfigFile(filePath: string, config: ArrConfig): Promise<void> {
+  await mkdir(path.dirname(filePath), { recursive: true });
+  await writeFile(filePath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+}
+
 function getStringOption(parsed: ParsedArgs, key: string): string | undefined {
   const value = parsed.options[key];
   return typeof value === "string" ? value : undefined;
+}
+
+type Prompter = {
+  ask: (prompt: string, fallback?: string) => Promise<string>;
+  choose: (prompt: string, options: string[], fallbackIndex: number) => Promise<string>;
+  close: () => void;
+};
+
+function isInteractive(): boolean {
+  return Boolean(process.stdin.isTTY && process.stdout.isTTY);
+}
+
+function createPrompter(): Prompter {
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  const ask = async (prompt: string, fallback?: string): Promise<string> => {
+    const suffix = fallback ? ` (${fallback})` : "";
+    const answer = await rl.question(`${prompt}${suffix}: `);
+    const trimmed = answer.trim();
+    if (trimmed) return trimmed;
+    return fallback ?? "";
+  };
+
+  const choose = async (prompt: string, options: string[], fallbackIndex: number): Promise<string> => {
+    const lines = options.map((option, index) => `  ${index + 1}) ${option}`);
+    const answer = await ask(`${prompt}\n${lines.join("\n")}`, String(fallbackIndex + 1));
+    const parsed = Number.parseInt(answer, 10);
+    if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= options.length) {
+      return options[parsed - 1] ?? options[fallbackIndex]!;
+    }
+    return options[fallbackIndex]!;
+  };
+
+  const close = (): void => {
+    rl.close();
+  };
+
+  return { ask, choose, close };
 }
 
 function getRequiredStringOption(parsed: ParsedArgs, key: string): string {
@@ -261,6 +388,50 @@ function isSkippableFilename(fileName: string): boolean {
   return false;
 }
 
+function resolveCreator(parsed: ParsedArgs, config: ArrConfig): string {
+  const creator = getStringOption(parsed, "creator") ?? config.creator;
+  if (!creator) {
+    throw new CliError("missing_flag", "Missing required option --creator. Run `arr init` to set a default.");
+  }
+  return creator;
+}
+
+function resolvePrivateKeyPath(parsed: ParsedArgs, config: ArrConfig): string {
+  const privateKeyPath = getStringOption(parsed, "private-key") ?? config.privateKeyPath;
+  if (!privateKeyPath) {
+    throw new CliError("missing_flag", "Missing required option --private-key. Run `arr init` to set a default.");
+  }
+  return privateKeyPath;
+}
+
+function resolveTool(parsed: ParsedArgs, config: ArrConfig): string | undefined {
+  return getStringOption(parsed, "tool") ?? config.tool;
+}
+
+function resolveMode(parsed: ParsedArgs, config: ArrConfig): "auto" | "sidecar" | "metadata" {
+  const modeOption = getStringOption(parsed, "mode") ?? config.defaultMode ?? "auto";
+  if (modeOption !== "auto" && modeOption !== "sidecar" && modeOption !== "metadata") {
+    throw new CliError("invalid_mode", "Mode must be one of: auto, sidecar, metadata.");
+  }
+  return modeOption;
+}
+
+function resolveIntentForFile(filePath: string, parsed: ParsedArgs, config: ArrConfig): string | undefined {
+  const explicit = getStringOption(parsed, "intent");
+  if (explicit) {
+    return explicit;
+  }
+
+  const policy = config.intentPolicy ?? "none";
+  if (policy === "fixed") {
+    return config.intent;
+  }
+  if (policy === "filename") {
+    return path.parse(filePath).name;
+  }
+  return undefined;
+}
+
 function toJson(command: Command, data: Record<string, unknown>): string {
   return `${JSON.stringify({ ok: true, command, data }, null, 2)}\n`;
 }
@@ -312,6 +483,237 @@ async function loadSignedAttestation(filePath: string): Promise<ExtractionResult
   }
 }
 
+async function handleInit(parsed: ParsedArgs): Promise<void> {
+  if (parsed.options.help === true) {
+    process.stdout.write(getHelp("init"));
+    return;
+  }
+
+  if (!isInteractive()) {
+    throw new CliError("interactive_only", "`arr init` requires an interactive terminal.");
+  }
+
+  const paths = getConfigPaths();
+  const configPath = parsed.options.global === true ? paths.global : paths.local;
+  const existing = (await readConfigFile(configPath)) ?? {};
+  const prompter = createPrompter();
+
+  try {
+    const keyChoice = await prompter.choose(
+      "Private key",
+      ["Generate new keypair", "Use existing private key"],
+      0,
+    );
+
+    let privateKeyPath = existing.privateKeyPath;
+    let publicKeyPath = existing.publicKeyPath;
+    let creatorFromKey: string | undefined;
+
+    if (keyChoice.startsWith("Generate")) {
+      const defaultKeysDir = path.join(os.homedir(), ".arr", "keys");
+      const keysDir = await prompter.ask("Key directory", defaultKeysDir);
+      await mkdir(keysDir, { recursive: true });
+
+      const { privateKeyPem, publicKeyPem, creator } = generateKeyPair();
+      creatorFromKey = creator;
+      privateKeyPath = path.join(keysDir, "arr-ed25519-private.pem");
+      publicKeyPath = path.join(keysDir, "arr-ed25519-public.pem");
+
+      await writeFile(privateKeyPath, privateKeyPem, { encoding: "utf8", mode: 0o600 });
+      await writeFile(publicKeyPath, publicKeyPem, "utf8");
+    } else {
+      privateKeyPath = await prompter.ask("Private key path", existing.privateKeyPath);
+    }
+
+    if (!privateKeyPath) {
+      throw new CliError("missing_flag", "Private key path is required.");
+    }
+
+    const creator = await prompter.ask("Creator ID (URL or pubkey)", existing.creator ?? creatorFromKey);
+    if (!creator) {
+      throw new CliError("missing_flag", "Creator ID is required.");
+    }
+
+    const tool = await prompter.ask("Default tool (optional)", existing.tool ?? "");
+    const intentChoice = await prompter.choose(
+      "Default intent behavior",
+      ["none (omit intent)", "fixed (one label for all files)", "filename (use file name)"],
+      0,
+    );
+    let intentPolicy: IntentPolicy = "none";
+    let intent: string | undefined = undefined;
+
+    if (intentChoice.startsWith("fixed")) {
+      intentPolicy = "fixed";
+      const fixedIntent = await prompter.ask("Fixed intent label", existing.intent ?? "");
+      if (fixedIntent) {
+        intent = fixedIntent;
+      }
+    } else if (intentChoice.startsWith("filename")) {
+      intentPolicy = "filename";
+    }
+
+    const defaultInbox = await prompter.ask(
+      "Default watch folder",
+      existing.defaultInbox ?? path.join(os.homedir(), "ARR-Inbox"),
+    );
+
+    const modeChoice = await prompter.choose("Default embed mode", ["auto", "metadata", "sidecar"], 0);
+
+    const config: ArrConfig = {
+      creator,
+      privateKeyPath,
+      intentPolicy,
+    };
+    config.defaultMode = modeChoice as "auto" | "metadata" | "sidecar";
+    if (publicKeyPath) {
+      config.publicKeyPath = publicKeyPath;
+    }
+    if (defaultInbox) {
+      config.defaultInbox = defaultInbox;
+    }
+    if (tool) {
+      config.tool = tool;
+    }
+    if (intent) {
+      config.intent = intent;
+    }
+
+    await writeConfigFile(configPath, config);
+
+    if (parsed.wantsJson) {
+      process.stdout.write(
+        toJson("init", {
+          configPath,
+          creator,
+          privateKeyPath,
+          publicKeyPath: publicKeyPath ?? null,
+        }),
+      );
+      return;
+    }
+
+    process.stdout.write(
+      [
+        "ARR setup saved.",
+        `Config: ${configPath}`,
+        `Creator: ${creator}`,
+        `Private key: ${privateKeyPath}`,
+        publicKeyPath ? `Public key: ${publicKeyPath}` : "",
+        "",
+      ].filter(Boolean).join("\n"),
+    );
+  } finally {
+    prompter.close();
+  }
+}
+
+async function handleInteractive(): Promise<void> {
+  if (!isInteractive()) {
+    process.stdout.write(getHelp());
+    return;
+  }
+
+  const configState = await loadConfig();
+  if (configState.source === "none") {
+    await handleInit({ command: "init", positionals: [], options: {}, wantsJson: false });
+    return handleInteractive();
+  }
+
+  const prompter = createPrompter();
+  try {
+    const action = await prompter.choose(
+      "What do you want to do?",
+      [
+        "Set up creator (arr init)",
+        "Watch a folder (drag & drop)",
+        "Attest a file or folder",
+        "Verify a file",
+        "Extract an attestation",
+        "Exit",
+      ],
+      0,
+    );
+
+    if (action === "Exit") {
+      return;
+    }
+
+    const { config } = await loadConfig();
+
+    if (action === "Set up creator (arr init)") {
+      await handleInit({ command: "init", positionals: [], options: {}, wantsJson: false });
+      return;
+    }
+
+    if (action === "Watch a folder (drag & drop)") {
+      const defaultInbox = config.defaultInbox ?? path.join(os.homedir(), "ARR-Inbox");
+      const dir = await prompter.ask("Watch folder", defaultInbox);
+      await handleWatch({
+        command: "watch",
+        positionals: [],
+        options: dir ? { in: dir } : {},
+        wantsJson: false,
+      });
+      return;
+    }
+
+    if (action === "Attest a file or folder") {
+      const inputPath = await prompter.ask("File or folder path");
+      if (!inputPath) {
+        return;
+      }
+      let recursive = false;
+      try {
+        const stats = await stat(inputPath);
+        if (stats.isDirectory()) {
+          const choice = await prompter.choose("Directory detected. Attest all files?", ["Yes", "No"], 0);
+          recursive = choice === "Yes";
+        }
+      } catch {
+        // Let handler surface errors
+      }
+
+      await handleAttest({
+        command: "attest",
+        positionals: [inputPath],
+        options: recursive ? { recursive: true } : {},
+        wantsJson: false,
+      });
+      return;
+    }
+
+    if (action === "Verify a file") {
+      const inputPath = await prompter.ask("File path");
+      if (!inputPath) {
+        return;
+      }
+      await handleVerify({
+        command: "verify",
+        positionals: [inputPath],
+        options: {},
+        wantsJson: false,
+      });
+      return;
+    }
+
+    if (action === "Extract an attestation") {
+      const inputPath = await prompter.ask("File path");
+      if (!inputPath) {
+        return;
+      }
+      await handleExtract({
+        command: "extract",
+        positionals: [inputPath],
+        options: {},
+        wantsJson: false,
+      });
+    }
+  } finally {
+    prompter.close();
+  }
+}
+
 async function handleKeygen(parsed: ParsedArgs): Promise<void> {
   if (parsed.options.help === true) {
     process.stdout.write(getHelp("keygen"));
@@ -351,8 +753,14 @@ async function handleKeygen(parsed: ParsedArgs): Promise<void> {
   );
 }
 
-function buildAttestation(parsed: ParsedArgs): Attestation {
-  const creator = getRequiredStringOption(parsed, "creator");
+type AttestationOverrides = {
+  creator: string;
+  intent?: string;
+  tool?: string;
+};
+
+function buildAttestation(parsed: ParsedArgs, overrides: AttestationOverrides): Attestation {
+  const creator = overrides.creator;
   const expires = getStringOption(parsed, "expires");
 
   if (expires) {
@@ -371,13 +779,13 @@ function buildAttestation(parsed: ParsedArgs): Attestation {
     revocable: true,
   };
 
-  const intent = getStringOption(parsed, "intent");
+  const intent = overrides.intent;
 
   if (intent) {
     attestation.intent = intent;
   }
 
-  const tool = getStringOption(parsed, "tool");
+  const tool = overrides.tool;
 
   if (tool) {
     attestation.tool = tool;
@@ -438,6 +846,42 @@ async function attestSigned(
   };
 }
 
+async function walkDirectory(dirPath: string, files: string[]): Promise<void> {
+  const entries = await readdir(dirPath, { withFileTypes: true });
+  for (const entry of entries) {
+    if (isSkippableFilename(entry.name)) {
+      continue;
+    }
+    const fullPath = path.join(dirPath, entry.name);
+    if (entry.isDirectory()) {
+      await walkDirectory(fullPath, files);
+      continue;
+    }
+    if (entry.isFile()) {
+      files.push(fullPath);
+    }
+  }
+}
+
+async function collectInputPaths(inputPath: string, recursive: boolean): Promise<string[]> {
+  const stats = await stat(inputPath);
+  if (stats.isDirectory()) {
+    if (!recursive) {
+      throw new CliError(
+        "directory_requires_recursive",
+        "Input is a directory. Use --recursive to attest all files or use `arr watch`.",
+      );
+    }
+    const files: string[] = [];
+    await walkDirectory(inputPath, files);
+    return files;
+  }
+  if (!stats.isFile()) {
+    throw new CliError("invalid_input", "Input must be a file or directory.");
+  }
+  return [inputPath];
+}
+
 async function handleAttest(parsed: ParsedArgs): Promise<void> {
   if (parsed.options.help === true) {
     process.stdout.write(getHelp("attest"));
@@ -450,52 +894,103 @@ async function handleAttest(parsed: ParsedArgs): Promise<void> {
     throw new CliError("missing_file", "Usage: arr attest <file> ...");
   }
 
-  await ensureFileExists(inputPath);
-
-  const privateKeyPath = getRequiredStringOption(parsed, "private-key");
+  const { config } = await loadConfig();
+  const creator = resolveCreator(parsed, config);
+  const privateKeyPath = resolvePrivateKeyPath(parsed, config);
   await ensureFileExists(privateKeyPath);
 
   const privateKeyPem = await readFile(privateKeyPath, "utf8");
-  const attestation = buildAttestation(parsed);
-  const signed = signAttestation(attestation, privateKeyPem);
-
-  const modeOption = getStringOption(parsed, "mode") ?? "auto";
-
-  if (modeOption !== "auto" && modeOption !== "sidecar" && modeOption !== "metadata") {
-    throw new CliError("invalid_mode", "Mode must be one of: auto, sidecar, metadata.");
-  }
-
+  const tool = resolveTool(parsed, config);
+  const modeOption = resolveMode(parsed, config);
   const outPath = getStringOption(parsed, "out");
+  const recursive = parsed.options.recursive === true;
+  const outputDir = recursive && outPath ? outPath : undefined;
 
-  const paths: AttestPaths = {};
-  if (outPath) {
-    paths.metadata = outPath;
-    paths.sidecar = outPath;
+  if (outputDir) {
+    await mkdir(outputDir, { recursive: true });
   }
 
-  const outcome = await attestSigned(inputPath, signed, modeOption as "auto" | "sidecar" | "metadata", paths);
+  const targets = await collectInputPaths(inputPath, recursive);
+  const results: Array<{
+    inputPath: string;
+    mode: "metadata" | "sidecar";
+    format?: "png" | "jpeg";
+    outputPath: string;
+    signed: SignedAttestation;
+  }> = [];
+
+  for (const targetPath of targets) {
+    const intent = resolveIntentForFile(targetPath, parsed, config);
+    const overrides: AttestationOverrides = { creator };
+    if (intent) {
+      overrides.intent = intent;
+    }
+    if (tool) {
+      overrides.tool = tool;
+    }
+    const attestation = buildAttestation(parsed, overrides);
+    const signed = signAttestation(attestation, privateKeyPem);
+
+    const paths: AttestPaths = {};
+    if (outputDir) {
+      paths.metadata = metadataOutputPathAt(targetPath, outputDir);
+      paths.sidecar = sidecarOutputPathAt(targetPath, outputDir);
+    } else if (outPath) {
+      paths.metadata = outPath;
+      paths.sidecar = outPath;
+    }
+
+    const outcome = await attestSigned(targetPath, signed, modeOption, paths);
+    const result: {
+      inputPath: string;
+      mode: "metadata" | "sidecar";
+      outputPath: string;
+      signed: SignedAttestation;
+      format?: "png" | "jpeg";
+    } = {
+      inputPath: targetPath,
+      mode: outcome.mode,
+      outputPath: outcome.outputPath,
+      signed,
+    };
+    if (outcome.format) {
+      result.format = outcome.format;
+    }
+    results.push(result);
+
+    if (!parsed.wantsJson) {
+      if (outcome.mode === "sidecar") {
+        process.stdout.write(`Wrote ARR sidecar: ${outcome.outputPath}\n`);
+      } else {
+        process.stdout.write(
+          `Embedded ARR attestation in ${outcome.format?.toUpperCase()} metadata: ${outcome.outputPath}\n`,
+        );
+      }
+    }
+  }
 
   if (parsed.wantsJson) {
-    process.stdout.write(
-      toJson("attest", {
-        mode: outcome.mode,
-        format: outcome.format,
-        outputPath: outcome.outputPath,
-        signed,
-      }),
-    );
-
-    return;
+    if (results.length === 1) {
+      const result = results[0];
+      if (!result) {
+        return;
+      }
+      process.stdout.write(
+        toJson("attest", {
+          mode: result.mode,
+          format: result.format,
+          outputPath: result.outputPath,
+          signed: result.signed,
+        }),
+      );
+    } else {
+      process.stdout.write(
+        toJson("attest", {
+          results,
+        }),
+      );
+    }
   }
-
-  if (outcome.mode === "sidecar") {
-    process.stdout.write(`Wrote ARR sidecar: ${outcome.outputPath}\n`);
-    return;
-  }
-
-  process.stdout.write(
-    `Embedded ARR attestation in ${outcome.format?.toUpperCase()} metadata: ${outcome.outputPath}\n`,
-  );
 }
 
 async function handleWatch(parsed: ParsedArgs): Promise<void> {
@@ -504,23 +999,24 @@ async function handleWatch(parsed: ParsedArgs): Promise<void> {
     return;
   }
 
-  const inputDir = getRequiredStringOption(parsed, "in");
-  await ensureDirExists(inputDir);
-  void getRequiredStringOption(parsed, "creator");
-
-  const privateKeyPath = getRequiredStringOption(parsed, "private-key");
+  const { config } = await loadConfig();
+  const creator = resolveCreator(parsed, config);
+  const privateKeyPath = resolvePrivateKeyPath(parsed, config);
   await ensureFileExists(privateKeyPath);
   const privateKeyPem = await readFile(privateKeyPath, "utf8");
 
-  const outputDir = getStringOption(parsed, "out-dir");
+  const inputDir =
+    getStringOption(parsed, "in") ?? config.defaultInbox ?? path.join(os.homedir(), "ARR-Inbox");
+  await mkdir(inputDir, { recursive: true });
+  await ensureDirExists(inputDir);
+
+  const outputDir = getStringOption(parsed, "out-dir") ?? config.outputDir;
   if (outputDir) {
     await mkdir(outputDir, { recursive: true });
   }
 
-  const modeOption = getStringOption(parsed, "mode") ?? "auto";
-  if (modeOption !== "auto" && modeOption !== "sidecar" && modeOption !== "metadata") {
-    throw new CliError("invalid_mode", "Mode must be one of: auto, sidecar, metadata.");
-  }
+  const tool = resolveTool(parsed, config);
+  const modeOption = resolveMode(parsed, config);
 
   const pending = new Map<string, NodeJS.Timeout>();
 
@@ -548,10 +1044,18 @@ async function handleWatch(parsed: ParsedArgs): Promise<void> {
         }
       : {};
 
-    const attestation = buildAttestation(parsed);
+    const intent = resolveIntentForFile(filePath, parsed, config);
+    const overrides: AttestationOverrides = { creator };
+    if (intent) {
+      overrides.intent = intent;
+    }
+    if (tool) {
+      overrides.tool = tool;
+    }
+    const attestation = buildAttestation(parsed, overrides);
     const signed = signAttestation(attestation, privateKeyPem);
 
-    const outcome = await attestSigned(filePath, signed, modeOption as "auto" | "sidecar" | "metadata", paths);
+    const outcome = await attestSigned(filePath, signed, modeOption, paths);
 
     if (parsed.wantsJson) {
       process.stdout.write(
@@ -633,7 +1137,8 @@ async function handleVerify(parsed: ParsedArgs): Promise<void> {
   await ensureFileExists(inputPath);
   const extracted = await loadSignedAttestation(inputPath);
 
-  const publicKeyPath = getStringOption(parsed, "public-key");
+  const { config } = await loadConfig();
+  const publicKeyPath = getStringOption(parsed, "public-key") ?? config.publicKeyPath;
   let publicKeyPem: string | undefined;
 
   if (publicKeyPath) {
@@ -731,22 +1236,18 @@ async function run(): Promise<void> {
   }
 
   if (!parsed.command) {
-    if (!firstToken) {
-      process.stdout.write(getHelp());
+    if (!firstToken || (firstToken && firstToken.startsWith("--"))) {
+      await handleInteractive();
       return;
     }
 
-    if (firstToken && !firstToken.startsWith("--")) {
-      throw new CliError("unknown_command", `Unknown command: ${firstToken}`);
-    }
-
-    throw new CliError(
-      "unknown_command",
-      "Usage: arr <keygen|attest|verify|extract> [args]. Use --help for details.",
-    );
+    throw new CliError("unknown_command", `Unknown command: ${firstToken}`);
   }
 
   switch (parsed.command) {
+    case "init":
+      await handleInit(parsed);
+      break;
     case "keygen":
       await handleKeygen(parsed);
       break;

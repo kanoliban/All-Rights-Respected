@@ -78,7 +78,7 @@ All of that is useful.
 ## M1 reference implementation (in this repo)
 
 Current implementation status is build-first and in-repo.
-Published npm packages: `@allrightsrespected/sdk` and `@allrightsrespected/cli` (v0.1.0).
+Published npm packages: `@allrightsrespected/sdk` and `@allrightsrespected/cli` (v0.1.2).
 
 ```bash
 npm install -g @allrightsrespected/cli
@@ -92,8 +92,11 @@ npm test
 CLI location and examples:
 
 ```bash
-arr keygen --out-dir ./keys
-arr attest ./artwork.png --creator "pubkey:ed25519:..." --private-key ./keys/arr-ed25519-private.pem --mode auto
+arr init
+arr watch
+
+arr attest ./artwork.png
+arr attest ./assets --recursive
 arr verify ./artwork.png --json
 arr extract ./artwork.png --json
 
@@ -103,15 +106,13 @@ node packages/arr-cli/dist/index.js verify ./artwork.png --json
 node packages/arr-cli/dist/index.js extract ./artwork.png --json
 ```
 
+Tip: run `arr` with no arguments for the interactive menu.
+
 Drag & drop workflow (no path quoting):
 
 ```bash
-mkdir -p ~/ARR-Inbox
-arr watch --in ~/ARR-Inbox \
-  --creator "https://yoursite.com/@you" \
-  --private-key ./keys/arr-ed25519-private.pem \
-  --intent "SMS logo" \
-  --tool "canva"
+arr init
+arr watch
 ```
 
 Now drag files into `~/ARR-Inbox`. PNG/JPEG files get `.attested` copies; other files get `.arr` sidecars.
