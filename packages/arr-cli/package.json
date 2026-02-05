@@ -1,6 +1,6 @@
 {
   "name": "@allrightsrespected/cli",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "ARR command line interface for attesting and verifying files.",
   "license": "CC0-1.0",
   "private": false,

@@ -57,7 +57,7 @@ describe("arr cli integration", () => {
     const result = await runCli(["attest", "--help"], repoRoot);
 
     expect(result.code).toBe(0);
-    expect(result.stdout).toContain("arr attest <file>");
+    expect(result.stdout).toContain("arr attest <file|dir>");
     expect(result.stdout).toContain("--mode <auto|sidecar|metadata>");
   });
 
