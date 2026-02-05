@@ -639,13 +639,17 @@
 
     <section id="installation">
       <h2>1. Installation</h2>
-      <p>Current stable path: ARR tooling runs from this repository. Distribution package names are now finalized.</p>
+      <p>ARR packages are published to npm and available for install.</p>
 
-      <h3>Package Names (Distribution lane)</h3>
+      <h3>Install from npm</h3>
+      <pre><code>npm install @allrightsrespected/sdk
+npm install -g @allrightsrespected/cli</code></pre>
+
+      <h3>Package Names</h3>
       <pre><code>@allrightsrespected/sdk
 @allrightsrespected/cli</code></pre>
 
-      <h3>Repository Workflow (Current)</h3>
+      <h3>Repository Workflow (Contributors)</h3>
       <pre><code>git clone https://github.com/kanoliban/All-Rights-Respected.git
 cd All-Rights-Respected
 npm install
@@ -663,8 +667,8 @@ fixtures/conformance/v0.1</code></pre>
       </ul>
 
       <div class="note">
-        <div class="note-title">NOTE</div>
-        <p>Package names are finalized, but first npm publication still depends on scope ownership/auth setup. Until that is complete, use the in-repo workflow above.</p>
+        <div class="note-title">KNOWN LIMITATIONS (M1)</div>
+        <p>Ed25519 only. PNG/JPEG metadata and sidecar files only. No browser bundles yet.</p>
       </div>
     </section>
 

@@ -852,6 +852,10 @@
       <p>ARR attestations travel with the work. Multiple embedding methods are supported.</p>
 
       <h3>4.1 File Metadata</h3>
+      <div class="note">
+        <div class="note-title">IMPLEMENTATION NOTE (M1)</div>
+        <p>Current reference implementation supports metadata embedding for PNG and JPEG only. Other formats use sidecar files.</p>
+      </div>
       <h4>4.1.1 Images (JPEG, PNG, WebP)</h4>
       <p>Store attestation in XMP metadata under the namespace <code>http://arr.protocol/1.0/</code>:</p>
       <pre><code>&lt;x:xmpmeta xmlns:x="adobe:ns:meta/"&gt;

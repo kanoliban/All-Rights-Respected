@@ -27,6 +27,11 @@ This release introduces the first executable ARR reference implementation in thi
 ## CLI Quickstart
 
 ```bash
+arr keygen --out-dir ./keys
+arr attest ./artwork.png --creator "pubkey:ed25519:<...>" --private-key ./keys/arr-ed25519-private.pem --mode auto
+arr verify ./artwork.png --json
+arr extract ./artwork.png --json
+
 node packages/arr-cli/dist/index.js keygen --out-dir ./keys
 node packages/arr-cli/dist/index.js attest ./artwork.png --creator "pubkey:ed25519:<...>" --private-key ./keys/arr-ed25519-private.pem --mode auto
 node packages/arr-cli/dist/index.js verify ./artwork.png --json
@@ -38,4 +43,4 @@ node packages/arr-cli/dist/index.js extract ./artwork.png --json
 - Ed25519 only
 - Metadata embedding only for PNG and JPEG
 - Other formats use sidecar files (`<file>.arr`)
-- In-repo implementation only (no npm publish in M1)
+- npm packages published (`@allrightsrespected/sdk`, `@allrightsrespected/cli`)
