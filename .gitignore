@@ -26,6 +26,9 @@ Thumbs.db
 *.log
 npm-debug.log*
 
+# CLI keypairs (local only)
+keys/
+
 # Environment
 .env
 .env.local

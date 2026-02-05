@@ -103,6 +103,19 @@ node packages/arr-cli/dist/index.js verify ./artwork.png --json
 node packages/arr-cli/dist/index.js extract ./artwork.png --json
 ```
 
+Drag & drop workflow (no path quoting):
+
+```bash
+mkdir -p ~/ARR-Inbox
+arr watch --in ~/ARR-Inbox \
+  --creator "https://yoursite.com/@you" \
+  --private-key ./keys/arr-ed25519-private.pem \
+  --intent "SMS logo" \
+  --tool "canva"
+```
+
+Now drag files into `~/ARR-Inbox`. PNG/JPEG files get `.attested` copies; other files get `.arr` sidecars.
+
 Known limitations (M1):
 - Ed25519 only
 - PNG/JPEG metadata + sidecar only

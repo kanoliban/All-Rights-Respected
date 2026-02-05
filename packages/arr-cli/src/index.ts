@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import { randomUUID } from "node:crypto";
-import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import { watch } from "node:fs";
+import { access, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
   ArrError,
@@ -18,7 +19,7 @@ import {
   type SignedAttestation,
 } from "@allrightsrespected/sdk";
 
-type Command = "keygen" | "attest" | "verify" | "extract";
+type Command = "keygen" | "attest" | "verify" | "extract" | "watch";
 
 type ParsedArgs = {
   command: Command | undefined;
@@ -50,7 +51,13 @@ function parseArgs(argv: string[]): ParsedArgs {
 
   const firstToken = argv[0];
 
-  if (firstToken === "keygen" || firstToken === "attest" || firstToken === "verify" || firstToken === "extract") {
+  if (
+    firstToken === "keygen" ||
+    firstToken === "attest" ||
+    firstToken === "verify" ||
+    firstToken === "extract" ||
+    firstToken === "watch"
+  ) {
     command = firstToken;
     tokens = argv.slice(1);
   }
@@ -102,6 +109,7 @@ function getHelp(command?: Command): string {
       "  attest   Sign and attach an ARR attestation",
       "  verify   Verify ARR metadata or sidecar",
       "  extract  Print ARR payload from metadata or sidecar",
+      "  watch    Auto-attest files dropped into a folder",
       "",
       "Global options:",
       "  --json   Emit stable JSON envelopes",
@@ -152,6 +160,25 @@ function getHelp(command?: Command): string {
     ].join("\n");
   }
 
+  if (command === "watch") {
+    return [
+      "Usage:",
+      "  arr watch --in <dir> --creator <id> --private-key <pemPath> [options]",
+      "",
+      "Options:",
+      "  --out-dir <dir>          Output directory (defaults to input dir)",
+      "  --intent <text>           Creative intent",
+      "  --tool <name/version>     Tool marker",
+      "  --expires <YYYY-MM-DD>    Expiry date",
+      "  --mode <auto|sidecar|metadata>",
+      "  --json                    Emit JSON output",
+      "",
+      "Tip:",
+      "  Drag files into the watched folder to auto-attest them.",
+      "",
+    ].join("\n");
+  }
+
   return [
     "Usage:",
     "  arr extract <file> [--json]",
@@ -185,6 +212,20 @@ async function ensureFileExists(filePath: string): Promise<void> {
   }
 }
 
+async function ensureDirExists(dirPath: string): Promise<void> {
+  try {
+    const stats = await stat(dirPath);
+    if (!stats.isDirectory()) {
+      throw new CliError("not_a_directory", `Not a directory: ${dirPath}`);
+    }
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      throw new CliError("dir_not_found", `Directory not found: ${dirPath}`);
+    }
+    throw error;
+  }
+}
+
 function defaultMetadataOutputPath(inputPath: string): string {
   const parsed = path.parse(inputPath);
 
@@ -193,6 +234,31 @@ function defaultMetadataOutputPath(inputPath: string): string {
   }
 
   return path.join(parsed.dir, `${parsed.name}.attested${parsed.ext}`);
+}
+
+function metadataOutputPathAt(inputPath: string, outputDir: string): string {
+  const parsed = path.parse(inputPath);
+
+  if (!parsed.ext) {
+    return path.join(outputDir, `${parsed.name}.attested`);
+  }
+
+  return path.join(outputDir, `${parsed.name}.attested${parsed.ext}`);
+}
+
+function sidecarOutputPathAt(inputPath: string, outputDir: string): string {
+  const parsed = path.parse(inputPath);
+  return path.join(outputDir, `${parsed.base}.arr`);
+}
+
+function isSkippableFilename(fileName: string): boolean {
+  const lower = fileName.toLowerCase();
+  if (lower.startsWith(".")) return true;
+  if (lower.endsWith("~")) return true;
+  if (lower === "thumbs.db" || lower === ".ds_store") return true;
+  if (lower.endsWith(".arr")) return true;
+  if (lower.includes(".attested")) return true;
+  return false;
 }
 
 function toJson(command: Command, data: Record<string, unknown>): string {
@@ -324,6 +390,54 @@ function buildAttestation(parsed: ParsedArgs): Attestation {
   return attestation;
 }
 
+type AttestPaths = {
+  metadata?: string;
+  sidecar?: string;
+};
+
+type AttestOutcome = {
+  mode: "metadata" | "sidecar";
+  outputPath: string;
+  format?: "png" | "jpeg";
+};
+
+async function attestSigned(
+  inputPath: string,
+  signed: SignedAttestation,
+  modeOption: "auto" | "sidecar" | "metadata",
+  paths: AttestPaths = {},
+): Promise<AttestOutcome> {
+  if (modeOption === "sidecar") {
+    const writtenPath = await writeSidecar(inputPath, signed, paths.sidecar);
+    return { mode: "sidecar", outputPath: writtenPath };
+  }
+
+  const bytes = await readFile(inputPath);
+  const detectedFormat = detectFileFormat(bytes);
+
+  if (modeOption === "metadata" && detectedFormat === "unknown") {
+    throw new CliError(
+      "unsupported_format",
+      "Metadata mode currently supports only PNG and JPEG files. Use --mode sidecar instead.",
+    );
+  }
+
+  if (detectedFormat === "unknown") {
+    const writtenPath = await writeSidecar(inputPath, signed, paths.sidecar);
+    return { mode: "sidecar", outputPath: writtenPath };
+  }
+
+  const embedded = embedAttestationInMetadata(bytes, signed, detectedFormat);
+  const targetPath = paths.metadata ?? defaultMetadataOutputPath(inputPath);
+  await writeFile(targetPath, embedded);
+
+  return {
+    mode: "metadata",
+    outputPath: targetPath,
+    format: detectedFormat,
+  };
+}
+
 async function handleAttest(parsed: ParsedArgs): Promise<void> {
   if (parsed.options.help === true) {
     process.stdout.write(getHelp("attest"));
@@ -353,64 +467,20 @@ async function handleAttest(parsed: ParsedArgs): Promise<void> {
 
   const outPath = getStringOption(parsed, "out");
 
-  if (modeOption === "sidecar") {
-    const writtenPath = await writeSidecar(inputPath, signed, outPath);
-
-    if (parsed.wantsJson) {
-      process.stdout.write(
-        toJson("attest", {
-          mode: "sidecar",
-          outputPath: writtenPath,
-          signed,
-        }),
-      );
-
-      return;
-    }
-
-    process.stdout.write(`Wrote ARR sidecar: ${writtenPath}\n`);
-    return;
+  const paths: AttestPaths = {};
+  if (outPath) {
+    paths.metadata = outPath;
+    paths.sidecar = outPath;
   }
 
-  const bytes = await readFile(inputPath);
-  const detectedFormat = detectFileFormat(bytes);
-
-  if (modeOption === "metadata" && detectedFormat === "unknown") {
-    throw new CliError(
-      "unsupported_format",
-      "Metadata mode currently supports only PNG and JPEG files. Use --mode sidecar instead.",
-    );
-  }
-
-  if (detectedFormat === "unknown") {
-    const writtenPath = await writeSidecar(inputPath, signed, outPath);
-
-    if (parsed.wantsJson) {
-      process.stdout.write(
-        toJson("attest", {
-          mode: "sidecar",
-          outputPath: writtenPath,
-          signed,
-        }),
-      );
-
-      return;
-    }
-
-    process.stdout.write(`Unknown format detected. Wrote ARR sidecar: ${writtenPath}\n`);
-    return;
-  }
-
-  const embedded = embedAttestationInMetadata(bytes, signed, detectedFormat);
-  const targetPath = outPath ?? defaultMetadataOutputPath(inputPath);
-  await writeFile(targetPath, embedded);
+  const outcome = await attestSigned(inputPath, signed, modeOption as "auto" | "sidecar" | "metadata", paths);
 
   if (parsed.wantsJson) {
     process.stdout.write(
       toJson("attest", {
-        mode: "metadata",
-        format: detectedFormat,
-        outputPath: targetPath,
+        mode: outcome.mode,
+        format: outcome.format,
+        outputPath: outcome.outputPath,
         signed,
       }),
     );
@@ -418,7 +488,134 @@ async function handleAttest(parsed: ParsedArgs): Promise<void> {
     return;
   }
 
-  process.stdout.write(`Embedded ARR attestation in ${detectedFormat.toUpperCase()} metadata: ${targetPath}\n`);
+  if (outcome.mode === "sidecar") {
+    process.stdout.write(`Wrote ARR sidecar: ${outcome.outputPath}\n`);
+    return;
+  }
+
+  process.stdout.write(
+    `Embedded ARR attestation in ${outcome.format?.toUpperCase()} metadata: ${outcome.outputPath}\n`,
+  );
+}
+
+async function handleWatch(parsed: ParsedArgs): Promise<void> {
+  if (parsed.options.help === true) {
+    process.stdout.write(getHelp("watch"));
+    return;
+  }
+
+  const inputDir = getRequiredStringOption(parsed, "in");
+  await ensureDirExists(inputDir);
+  void getRequiredStringOption(parsed, "creator");
+
+  const privateKeyPath = getRequiredStringOption(parsed, "private-key");
+  await ensureFileExists(privateKeyPath);
+  const privateKeyPem = await readFile(privateKeyPath, "utf8");
+
+  const outputDir = getStringOption(parsed, "out-dir");
+  if (outputDir) {
+    await mkdir(outputDir, { recursive: true });
+  }
+
+  const modeOption = getStringOption(parsed, "mode") ?? "auto";
+  if (modeOption !== "auto" && modeOption !== "sidecar" && modeOption !== "metadata") {
+    throw new CliError("invalid_mode", "Mode must be one of: auto, sidecar, metadata.");
+  }
+
+  const pending = new Map<string, NodeJS.Timeout>();
+
+  const processFile = async (filePath: string): Promise<void> => {
+    try {
+      const stats = await stat(filePath);
+      if (!stats.isFile()) return;
+    } catch (error: unknown) {
+      if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+        return;
+      }
+      throw error;
+    }
+
+    const fileName = path.basename(filePath);
+    if (isSkippableFilename(fileName)) {
+      return;
+    }
+
+    const outputBaseDir = outputDir ?? path.dirname(filePath);
+    const paths: AttestPaths = outputDir
+      ? {
+          metadata: metadataOutputPathAt(filePath, outputBaseDir),
+          sidecar: sidecarOutputPathAt(filePath, outputBaseDir),
+        }
+      : {};
+
+    const attestation = buildAttestation(parsed);
+    const signed = signAttestation(attestation, privateKeyPem);
+
+    const outcome = await attestSigned(filePath, signed, modeOption as "auto" | "sidecar" | "metadata", paths);
+
+    if (parsed.wantsJson) {
+      process.stdout.write(
+        toJson("watch", {
+          inputPath: filePath,
+          mode: outcome.mode,
+          format: outcome.format,
+          outputPath: outcome.outputPath,
+        }),
+      );
+      return;
+    }
+
+    if (outcome.mode === "sidecar") {
+      process.stdout.write(`Attested (sidecar): ${filePath} -> ${outcome.outputPath}\n`);
+      return;
+    }
+
+    process.stdout.write(`Attested (${outcome.format?.toUpperCase()}): ${filePath} -> ${outcome.outputPath}\n`);
+  };
+
+  const schedule = (filePath: string): void => {
+    const existing = pending.get(filePath);
+    if (existing) {
+      clearTimeout(existing);
+    }
+
+    const timer = setTimeout(() => {
+      pending.delete(filePath);
+      void processFile(filePath).catch((error) => {
+        const normalized = normalizeError(error);
+        if (parsed.wantsJson) {
+          process.stderr.write(toJsonError("watch", normalized));
+        } else {
+          process.stderr.write(`Error [${normalized.code}]: ${normalized.message}\n`);
+        }
+      });
+    }, 400);
+
+    pending.set(filePath, timer);
+  };
+
+  if (parsed.wantsJson) {
+    process.stdout.write(
+      toJson("watch", {
+        status: "started",
+        inputDir,
+        outputDir: outputDir ?? null,
+        mode: modeOption,
+      }),
+    );
+  } else {
+    process.stdout.write(`Watching ${inputDir}\n`);
+    if (outputDir) {
+      process.stdout.write(`Output directory: ${outputDir}\n`);
+    }
+    process.stdout.write("Drop files into the folder to auto-attest them.\n");
+  }
+
+  watch(inputDir, { persistent: true }, (_eventType, filename) => {
+    if (!filename) return;
+    const filePath = path.join(inputDir, filename.toString());
+    schedule(filePath);
+  });
 }
 
 async function handleVerify(parsed: ParsedArgs): Promise<void> {
@@ -555,6 +752,9 @@ async function run(): Promise<void> {
       break;
     case "attest":
       await handleAttest(parsed);
+      break;
+    case "watch":
+      await handleWatch(parsed);
       break;
     case "verify":
       await handleVerify(parsed);
