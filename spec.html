@@ -76,57 +76,16 @@
       100% { transform: translateX(-50%); }
     }
 
-    /* Announcement */
-    .announcement {
+    /* Header */
+    header {
       position: fixed;
       top: 2.5rem;
       left: 0;
       right: 0;
       background: var(--bg);
       border-bottom: 1px solid var(--border);
-      z-index: 99;
-    }
-
-    .announcement-content {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 0.5rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      flex-wrap: wrap;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
-      letter-spacing: 0.05em;
-      color: var(--fg);
-    }
-
-    .announcement-links {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-
-    .announcement a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    .announcement a:hover {
-      color: var(--fg);
-    }
-
-    /* Header */
-    header {
-      position: fixed;
-      top: 5rem;
-      left: 0;
-      right: 0;
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
       padding: 1rem 2rem;
-      z-index: 98;
+      z-index: 99;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -333,7 +292,7 @@
     main {
       max-width: 900px;
       margin: 0 auto;
-      padding: 10.5rem 3rem 4rem;
+      padding: 8rem 3rem 4rem;
     }
 
     /* Title block */
@@ -584,12 +543,7 @@
       }
 
       main {
-        padding: 9.5rem 1.5rem 3rem;
-      }
-
-      .announcement-content {
-        padding: 0.5rem 1rem;
-        align-items: flex-start;
+        padding: 7rem 1.5rem 3rem;
       }
 
       h1 {
@@ -618,25 +572,15 @@
   <div class="ticker">
     <div class="ticker-content">
       <span>ALL RIGHTS RESPECTED</span>
-      <span>OPEN PROTOCOL v0.1</span>
+      <span>OPEN PROTOCOL v0.1 is LIVE</span>
       <span>INFRASTRUCTURE FOR THE RESPECT ECONOMY</span>
       <span>IMPLEMENT FREELY</span>
       <span>NO PERMISSION REQUIRED</span>
       <span>ALL RIGHTS RESPECTED</span>
-      <span>OPEN PROTOCOL v0.1</span>
+      <span>OPEN PROTOCOL v0.1 is LIVE</span>
       <span>INFRASTRUCTURE FOR THE RESPECT ECONOMY</span>
       <span>IMPLEMENT FREELY</span>
       <span>NO PERMISSION REQUIRED</span>
-    </div>
-  </div>
-
-  <div class="announcement">
-    <div class="announcement-content">
-      <span>ARR is live. Install the command line tool and SDK from npm.</span>
-      <span class="announcement-links">
-        <a href="https://github.com/kanoliban/All-Rights-Respected/releases/tag/v0.1.0-m1">Release notes</a>
-        <a href="sdk.html#installation">Install</a>
-      </span>
     </div>
   </div>
 
