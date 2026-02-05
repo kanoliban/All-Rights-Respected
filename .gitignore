@@ -28,6 +28,10 @@ npm-debug.log*
 
 # CLI keypairs (local only)
 keys/
+.arrrc.json
+.arr/
+**/arr-ed25519-private.pem
+**/arr-ed25519-public.pem
 
 # Environment
 .env

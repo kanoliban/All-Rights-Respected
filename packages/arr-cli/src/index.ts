@@ -1541,7 +1541,8 @@ async function handleVerify(parsed: ParsedArgs): Promise<void> {
   const extracted = await loadSignedAttestation(inputPath);
 
   const { config } = await loadConfig();
-  const publicKeyRaw = getStringOption(parsed, "public-key") ?? config.publicKeyPath;
+  const publicKeyFromFlag = getStringOption(parsed, "public-key");
+  const publicKeyRaw = publicKeyFromFlag ?? config.publicKeyPath;
   const publicKeyPath = publicKeyRaw ? normalizePathInput(publicKeyRaw) : undefined;
   let publicKeyPem: string | undefined;
 
@@ -1550,7 +1551,15 @@ async function handleVerify(parsed: ParsedArgs): Promise<void> {
     publicKeyPem = await readFile(publicKeyPath, "utf8");
   }
 
-  const result = verifyAttestation(extracted.signed, publicKeyPem);
+  // Prefer verifying with a public key embedded in the creator field (pubkey:ed25519:...)
+  // unless the user explicitly overrides with --public-key.
+  let result = publicKeyFromFlag
+    ? verifyAttestation(extracted.signed, publicKeyPem)
+    : verifyAttestation(extracted.signed);
+
+  if (!publicKeyFromFlag && !result.valid && result.reason === "missing_public_key" && publicKeyPem) {
+    result = verifyAttestation(extracted.signed, publicKeyPem);
+  }
 
   if (parsed.wantsJson) {
     process.stdout.write(

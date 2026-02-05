@@ -15,7 +15,7 @@ This document is the canonical implementation companion for the M1 reference bui
   - `verify`
   - `extract`
 
-Out of scope in M1: npm publish, browser SDK package, ECDSA/RSA, WebP/PDF/MP3/FLAC embedding.
+Out of scope in M1: browser extension or platform plugins, ECDSA/RSA, WebP/PDF/MP3/FLAC embedding.
 
 ## Repository Layout
 
@@ -37,6 +37,8 @@ npm test
 If your environment is network-restricted, install and test steps will fail until npm registry access is available.
 
 ## CLI Cookbook
+
+This cookbook uses repo-local invocation (`node packages/arr-cli/dist/index.js ...`). If you installed the CLI from npm, swap in `arr ...` instead. For the creator-focused flow (`arr init`, `arr watch`, batch defaults), see `docs/CLI-HOWTO.md`.
 
 ### 1) Generate keys
 

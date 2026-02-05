@@ -799,6 +799,11 @@
         </div>
       </div>
 
+      <div class="note">
+        <div class="note-title">CLI QUICKSTART</div>
+        <p>ARR is designed for volume: set up once, then attest single files, whole folders, or use a drag-and-drop inbox. Read the full guide: <a href="docs/CLI-HOWTO.md" style="color: var(--accent);">CLI How-To</a>.</p>
+      </div>
+
       <h3>Drag &amp; Drop (Hot Folder)</h3>
       <pre><code><span class="comment"># One-time setup</span>
 arr init
@@ -809,23 +814,25 @@ arr watch
 
       <h3>Using the CLI</h3>
       <pre><code><span class="comment"># Install the CLI from npm</span>
-npm install -g @allrightsrespected/cli
+npm install -g @allrightsrespected/cli@latest
 
-<span class="comment"># Repo path (for contributors and local dev)</span>
-git clone https://github.com/kanoliban/All-Rights-Respected.git
-cd All-Rights-Respected
-npm install
-npm run build
-
-<span class="comment"># Create and embed an attestation</span>
+<span class="comment"># Guided setup (saves config to ~/.arr/config.json)</span>
 arr init
-arr attest artwork.png
 
-<span class="comment"># Bulk attest a folder</span>
-arr attest ./assets --recursive
+<span class="comment"># Optional: interactive menu</span>
+arr
+
+<span class="comment"># Attest one file</span>
+arr attest "/path/to/artwork.png"
+
+<span class="comment"># Bulk attest a folder (PNG/JPEG only by default)</span>
+arr attest "/path/to/folder" --recursive
+
+<span class="comment"># Include everything (sidecars for non-images)</span>
+arr attest "/path/to/folder" --recursive --all
 
 <span class="comment"># Verify an existing attestation</span>
-arr verify artwork.png</code></pre>
+arr verify "/path/to/artwork.png"</code></pre>
 
       <h3>Using the SDK</h3>
       <pre><code><span class="comment">// Install the SDK</span>
