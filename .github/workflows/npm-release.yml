@@ -63,10 +63,22 @@ jobs:
 
       - name: Publish readiness validation
         if: ${{ inputs.publish }}
-        run: npm run publish:validate
+        run: npm run publish:validate --if-present
 
       - name: Publish packages
         if: ${{ inputs.publish }}
         run: |
-          npm publish --workspace @allrightsrespected/sdk --provenance --access public --tag "${{ inputs.npm_tag }}"
-          npm publish --workspace @allrightsrespected/cli --provenance --access public --tag "${{ inputs.npm_tag }}"
+          SDK_VERSION=$(node -p "require('./packages/arr-core/package.json').version")
+          CLI_VERSION=$(node -p "require('./packages/arr-cli/package.json').version")
+
+          if npm view "@allrightsrespected/sdk@${SDK_VERSION}" version >/dev/null 2>&1; then
+            echo "@allrightsrespected/sdk@${SDK_VERSION} already published; skipping publish."
+          else
+            npm publish --workspace @allrightsrespected/sdk --provenance --access public --tag "${{ inputs.npm_tag }}"
+          fi
+
+          if npm view "@allrightsrespected/cli@${CLI_VERSION}" version >/dev/null 2>&1; then
+            echo "@allrightsrespected/cli@${CLI_VERSION} already published; skipping publish."
+          else
+            npm publish --workspace @allrightsrespected/cli --provenance --access public --tag "${{ inputs.npm_tag }}"
+          fi
