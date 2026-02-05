@@ -2,6 +2,15 @@
 
 This guide is for creators who want a simple, repeatable way to attest their work.
 
+```text
+  █████╗ ██████╗ ██████╗
+ ██╔══██╗██╔══██╗██╔══██╗
+ ███████║██████╔╝██████╔╝
+ ██╔══██║██╔══██╗██╔══██╗
+ ██║  ██║██║  ██║██║  ██║
+ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
+```
+
 ## Install
 
 ```bash

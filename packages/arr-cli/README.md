@@ -2,6 +2,15 @@
 
 Creator-first command line tools for the **All Rights Respected (ARR)** attribution protocol.
 
+```text
+  █████╗ ██████╗ ██████╗
+ ██╔══██╗██╔══██╗██╔══██╗
+ ███████║██████╔╝██████╔╝
+ ██╔══██║██╔══██╗██╔══██╗
+ ██║  ██║██║  ██║██║  ██║
+ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
+```
+
 This CLI lets you:
 - generate Ed25519 keys
 - attest files (PNG/JPEG embedded into metadata, everything else uses a sidecar)
@@ -28,6 +37,12 @@ Prompt rules:
 - For yes/no questions, `y` = Yes and `n` = No.
 
 Config is saved to `~/.arr/config.json` by default.
+
+See what ARR is using right now:
+
+```bash
+arr config
+```
 
 ## Attest
 
@@ -57,4 +72,3 @@ arr extract "/path/to/file.png" --json
 ## License
 
 CC0-1.0
-

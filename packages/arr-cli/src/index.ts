@@ -499,11 +499,12 @@ function hasSupportedExtension(filePath: string, exts: Set<string>): boolean {
 
 function printBanner(): void {
   const lines = [
-    "   _    ____  ____",
-    "  / \\  |  _ \\|  _ \\",
-    " / _ \\ | |_) | |_) |",
-    "/ ___ \\|  _ <|  _ <",
-    "/_/   \\_\\_| \\_\\_| \\_\\",
+    "  █████╗ ██████╗ ██████╗",
+    " ██╔══██╗██╔══██╗██╔══██╗",
+    " ███████║██████╔╝██████╔╝",
+    " ██╔══██║██╔══██╗██╔══██╗",
+    " ██║  ██║██║  ██║██║  ██║",
+    " ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝",
     "",
   ];
   process.stdout.write(lines.join("\n"));
