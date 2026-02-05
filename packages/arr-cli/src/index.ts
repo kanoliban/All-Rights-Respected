@@ -21,8 +21,9 @@ import {
   type Attestation,
   type SignedAttestation,
 } from "@allrightsrespected/sdk";
+import { isYesNoMenu, NO_VALUES, parseMenuSelection, parseYesNo, YES_VALUES } from "./prompt.js";
 
-type Command = "keygen" | "attest" | "verify" | "extract" | "watch" | "init";
+type Command = "keygen" | "attest" | "verify" | "extract" | "watch" | "init" | "config";
 
 type ParsedArgs = {
   command: Command | undefined;
@@ -68,8 +69,6 @@ class CliError extends Error {
 }
 
 const DEFAULT_IMAGE_EXTS = new Set([".png", ".jpg", ".jpeg"]);
-const YES_VALUES = new Set(["y", "yes"]);
-const NO_VALUES = new Set(["n", "no"]);
 
 function parseArgs(argv: string[]): ParsedArgs {
   let command: Command | undefined;
@@ -83,7 +82,8 @@ function parseArgs(argv: string[]): ParsedArgs {
     firstToken === "verify" ||
     firstToken === "extract" ||
     firstToken === "watch" ||
-    firstToken === "init"
+    firstToken === "init" ||
+    firstToken === "config"
   ) {
     command = firstToken;
     tokens = argv.slice(1);
@@ -147,6 +147,7 @@ function getHelp(command?: Command): string {
       "  attest   Sign and attach an ARR attestation",
       "  verify   Verify ARR metadata or sidecar",
       "  extract  Print ARR payload from metadata or sidecar",
+      "  config   Show effective config and where it was loaded from",
       "  watch    Auto-attest files dropped into a folder",
       "",
       "Global options:",
@@ -201,6 +202,17 @@ function getHelp(command?: Command): string {
       "Options:",
       "  --global                  Store config in ~/.arr/config.json (default)",
       "  --local                   Store config in ./.arr/config.json",
+      "",
+    ].join("\n");
+  }
+
+  if (command === "config") {
+    return [
+      "Usage:",
+      "  arr config [--json]",
+      "",
+      "Options:",
+      "  --json                    Emit JSON output",
       "",
     ].join("\n");
   }
@@ -349,13 +361,6 @@ function isInteractive(): boolean {
   return Boolean(process.stdin.isTTY && process.stdout.isTTY);
 }
 
-function parseYesNo(input: string): boolean | null {
-  const normalized = input.trim().toLowerCase();
-  if (YES_VALUES.has(normalized)) return true;
-  if (NO_VALUES.has(normalized)) return false;
-  return null;
-}
-
 function safePromptFallback(value: string | undefined): string | undefined {
   if (!value) return undefined;
   const trimmed = value.trim();
@@ -423,32 +428,18 @@ function createPrompter(): Prompter {
   const choose = async (prompt: string, options: string[], fallbackIndex: number): Promise<string> => {
     const lines = options.map((option, index) => `  ${index + 1}) ${option}`);
     const promptText = `${prompt}\n${lines.join("\n")}`;
-    const fallback = String(fallbackIndex + 1);
+    const fallbackOption = options[fallbackIndex] ?? options[0] ?? "";
+    const hint = isYesNoMenu(options)
+      ? "y/n (or Enter for default)."
+      : "Enter a number (or Enter/y for default).";
 
     while (true) {
-      const answer = await ask(promptText, {
-        fallback,
-        hint: "Enter a number (or Enter/y for default).",
-      });
-      const normalized = answer.trim().toLowerCase();
-      const yesNo = parseYesNo(normalized);
-      if (
-        yesNo !== null &&
-        options.some((option) => option.toLowerCase() === "yes") &&
-        options.some((option) => option.toLowerCase() === "no")
-      ) {
-        if (yesNo === true) {
-          return options.find((option) => option.toLowerCase() === "yes") ?? options[fallbackIndex]!;
-        }
-        return options.find((option) => option.toLowerCase() === "no") ?? options[fallbackIndex]!;
+      const raw = await rl.question(`${promptText} (default: ${fallbackOption}): ${hint} `);
+      const parsed = parseMenuSelection(raw, options, fallbackIndex);
+      if (parsed.ok) {
+        return options[parsed.index] ?? options[fallbackIndex]!;
       }
-
-      const parsed = Number.parseInt(answer, 10);
-      if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= options.length) {
-        return options[parsed - 1] ?? options[fallbackIndex]!;
-      }
-
-      process.stdout.write(`Please enter a number between 1 and ${options.length}.\n`);
+      process.stdout.write(`${parsed.message}\n`);
     }
   };
 
@@ -1652,6 +1643,49 @@ async function handleExtract(parsed: ParsedArgs): Promise<void> {
   process.stdout.write(`${JSON.stringify(extracted.signed, null, 2)}\n`);
 }
 
+async function handleConfig(parsed: ParsedArgs): Promise<void> {
+  if (parsed.options.help === true) {
+    process.stdout.write(getHelp("config"));
+    return;
+  }
+
+  const paths = getConfigPaths();
+  const state = await loadConfig();
+
+  if (parsed.wantsJson) {
+    process.stdout.write(
+      toJson("config", {
+        source: state.source,
+        path: state.path ?? null,
+        config: state.config,
+        paths,
+      }),
+    );
+    return;
+  }
+
+  const activePath = state.path ?? "(none)";
+  process.stdout.write(
+    [
+      "ARR config",
+      `Source: ${state.source}`,
+      `Path: ${activePath}`,
+      "",
+      `creator: ${state.config.creator ?? ""}`,
+      `privateKeyPath: ${state.config.privateKeyPath ?? ""}`,
+      `publicKeyPath: ${state.config.publicKeyPath ?? ""}`,
+      `defaultInbox: ${state.config.defaultInbox ?? ""}`,
+      `defaultMode: ${state.config.defaultMode ?? ""}`,
+      `tool: ${state.config.tool ?? ""}`,
+      `intentPolicy: ${state.config.intentPolicy ?? ""}`,
+      `intent: ${state.config.intent ?? ""}`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  );
+  process.stdout.write("\n");
+}
+
 function normalizeError(error: unknown): { code: string; message: string } {
   if (error instanceof CliError) {
     return { code: error.code, message: error.message };
@@ -1703,6 +1737,9 @@ async function run(): Promise<void> {
       break;
     case "watch":
       await handleWatch(parsed);
+      break;
+    case "config":
+      await handleConfig(parsed);
       break;
     case "verify":
       await handleVerify(parsed);

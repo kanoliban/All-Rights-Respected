@@ -13,7 +13,7 @@ Define how ARR transitions from in-repo packages to installable npm distribution
 - Package names selected:
   - `@allrightsrespected/sdk`
   - `@allrightsrespected/cli`
-- Packages are published to npm (`0.1.0`)
+- Packages are published to npm (SDK `0.1.x`, CLI `0.1.x`)
 - Release workflow uses Trusted Publishing (OIDC) with provenance
 - `NPM_TOKEN` is not required for releases
 

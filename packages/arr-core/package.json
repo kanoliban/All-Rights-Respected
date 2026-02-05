@@ -1,6 +1,6 @@
 {
   "name": "@allrightsrespected/sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "ARR core protocol library (canonicalization, signing, verification, adapters).",
   "license": "CC0-1.0",
   "private": false,
@@ -35,7 +35,7 @@
   "bugs": {
     "url": "https://github.com/kanoliban/All-Rights-Respected/issues"
   },
-  "homepage": "https://github.com/kanoliban/All-Rights-Respected#readme",
+  "homepage": "https://www.allrightsrespected.com/sdk",
   "publishConfig": {
     "access": "public",
     "provenance": true

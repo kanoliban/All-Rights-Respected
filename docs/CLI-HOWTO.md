@@ -18,7 +18,14 @@ What to know:
 - Default config lives at `~/.arr/config.json`.
 - Enter or `y` accepts the default.
 - `n` skips optional fields.
+- For yes/no questions, `y` = Yes and `n` = No.
 - If you need a per-project config, use `arr init --local` (writes `./.arr/config.json`).
+
+To see what ARR is using right now:
+
+```bash
+arr config
+```
 
 ## Attest a single file
 

@@ -79,7 +79,7 @@ All of that is useful.
 ## M1 reference implementation (in this repo)
 
 Current implementation status is build-first and in-repo.
-Published npm packages: `@allrightsrespected/sdk` and `@allrightsrespected/cli` (v0.1.7).
+Published npm packages: `@allrightsrespected/sdk` and `@allrightsrespected/cli` (v0.1.8).
 
 ```bash
 npm install -g @allrightsrespected/cli

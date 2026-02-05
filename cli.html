@@ -533,7 +533,7 @@
   <div class="announcement" role="region" aria-label="Announcement">
     <a class="announcement-link" href="cli.html">
       <span class="announcement-badge">New</span>
-      <span class="announcement-text">ARR CLI v0.1.7: drag &amp; drop attestation is live.</span>
+      <span class="announcement-text">ARR CLI v0.1.8: smoother prompts + config command.</span>
       <span class="announcement-cta">CLI QUICKSTART →</span>
     </a>
   </div>
@@ -599,7 +599,7 @@ npm install -g @allrightsrespected/cli@latest</code></pre>
       <pre><code>arr init</code></pre>
       <div class="note">
         <div class="note-title">PROMPT BEHAVIOR</div>
-        <p>Press Enter or type <code>y</code> to accept the default. Type <code>n</code> to skip optional fields.</p>
+        <p>Press Enter or type <code>y</code> to accept the default. Type <code>n</code> to skip optional fields. For yes/no questions, <code>y</code> = Yes and <code>n</code> = No.</p>
       </div>
       <p>Config locations:</p>
       <pre><code><span class="comment"># default (global)</span>
@@ -607,6 +607,8 @@ npm install -g @allrightsrespected/cli@latest</code></pre>
 
 <span class="comment"># optional (per-project)</span>
 arr init --local   <span class="comment"># writes ./.arr/config.json</span></code></pre>
+      <p>See what ARR is using right now:</p>
+      <pre><code>arr config</code></pre>
     </section>
 
     <section>
