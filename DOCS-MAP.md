@@ -22,6 +22,7 @@ Last updated: 2026-02-05
 | `docs/RELEASE-v0.1.7.md` | CLI onboarding prompt hardening + safer defaults |
 | `docs/RELEASE-v0.1.8.md` | Yes/No prompt fixes + npm READMEs + `arr config` |
 | `docs/RELEASE-v0.1.9.md` | CLI banner refresh + website quickstart update |
+| `docs/RELEASE-v0.1.10.md` | Banner spacing (letter separation) + website quickstart sync |
 | `docs/PUBLISHING.md` | npm publication policy, compatibility rules, and release gates |
 | `docs/METRICS.md` | Adoption and contributor throughput tracking |
 | `CONTRIBUTING.md` | Contributor workflow and guardrails |
