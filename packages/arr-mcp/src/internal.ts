@@ -6,6 +6,16 @@ export type AttestationInput = Omit<Attestation, "version" | "id" | "created"> &
   created?: string;
 };
 
+export function stripUndefined<T extends Record<string, unknown>>(obj: T): T {
+  const result = {} as Record<string, unknown>;
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      result[key] = value;
+    }
+  }
+  return result as T;
+}
+
 function assertValidDate(expires: string | undefined): void {
   if (!expires) {
     return;
@@ -26,8 +36,8 @@ export function buildAttestation(
 
   assertValidDate(input.expires);
 
-  return {
-    version: "arr/0.1",
+  return stripUndefined({
+    version: "arr/0.1" as const,
     id,
     created,
     creator: input.creator,
@@ -40,7 +50,7 @@ export function buildAttestation(
     license: input.license,
     renews: overrides.renews ?? input.renews,
     extensions: input.extensions,
-  };
+  }) as Attestation;
 }
 
 export function canonicalizeRecord(value: unknown): string {

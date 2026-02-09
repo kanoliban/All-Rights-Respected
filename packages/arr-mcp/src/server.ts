@@ -15,12 +15,13 @@ import {
   writeSidecar,
   type SignedAttestation,
 } from "@allrightsrespected/sdk";
-import { buildAttestation, canonicalizeRecord, type AttestationInput } from "./internal.js";
+import { buildAttestation, canonicalizeRecord, stripUndefined, type AttestationInput } from "./internal.js";
 import type {
   ArrEvent,
   ArrEventEnvelope,
   ArrEventPayload,
   ArrEventType,
+  ArrInteractionContext,
   ArrMcpServer,
   ArrMcpServerOptions,
   ArrSignedRevocation,
@@ -54,14 +55,14 @@ function defaultMetadataOutputPath(inputPath: string): string {
 }
 
 function buildEvent(type: ArrEventType, payload?: ArrEventPayload, session?: string): ArrEventEnvelope {
-  const event: ArrEvent = {
-    version: EVENT_VERSION,
+  const event = stripUndefined({
+    version: EVENT_VERSION as "arr/event/0.1",
     id: randomUUID(),
     type,
     created: new Date().toISOString(),
     session,
     payload,
-  };
+  }) as ArrEvent;
 
   return { event };
 }
@@ -209,20 +210,39 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
     signature: z.string(),
   });
 
-  const toAttestationInput = (input: z.infer<typeof attestationSchema>): AttestationInput => ({
-    creator: input.creator,
-    id: input.id,
-    created: input.created,
-    intent: input.intent,
-    tool: input.tool,
-    upstream: input.upstream,
-    content_hash: input.content_hash,
-    expires: input.expires,
-    revocable: input.revocable,
-    license: input.license,
-    renews: input.renews,
-    extensions: input.extensions,
-  });
+  const toAttestationInput = (input: z.infer<typeof attestationSchema>): AttestationInput =>
+    stripUndefined({
+      creator: input.creator,
+      id: input.id,
+      created: input.created,
+      intent: input.intent,
+      tool: input.tool,
+      upstream: input.upstream,
+      content_hash: input.content_hash,
+      expires: input.expires,
+      revocable: input.revocable,
+      license: input.license,
+      renews: input.renews,
+      extensions: input.extensions,
+    }) as AttestationInput;
+
+  type ZodContext = z.infer<typeof contextSchema>;
+
+  function cleanContext(ctx: ZodContext): ArrInteractionContext | undefined {
+    if (!ctx) return undefined;
+    return stripUndefined(ctx) as ArrInteractionContext;
+  }
+
+  function cleanSignedAttestation(input: z.infer<typeof signedAttestationSchema>): SignedAttestation {
+    return {
+      attestation: stripUndefined(input.attestation) as SignedAttestation["attestation"],
+      signature: input.signature,
+    };
+  }
+
+  function eventPayload(fields: Record<string, unknown>): ArrEventPayload {
+    return stripUndefined(fields) as ArrEventPayload;
+  }
 
   server.tool(
     "arr.events.list",
@@ -246,7 +266,7 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
     async ({ attestation, context, session }) => {
       const draft = buildAttestation(toAttestationInput(attestation));
 
-      const envelope = emit("arr.attestation.draft.created", { attestation: draft, context }, session);
+      const envelope = emit("arr.attestation.draft.created", eventPayload({ attestation: draft, context: cleanContext(context) }), session);
       const payload = { attestation: draft, event: envelope };
       return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
     },
@@ -263,7 +283,7 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
     async ({ attestation, private_key_pem, context, session }) => {
       const unsigned = buildAttestation(toAttestationInput(attestation));
       const signed = signAttestation(unsigned, private_key_pem);
-      const envelope = emit("arr.attestation.signed", { signed_attestation: signed, context }, session);
+      const envelope = emit("arr.attestation.signed", eventPayload({ signed_attestation: signed, context: cleanContext(context) }), session);
       const payload = { signed_attestation: signed, event: envelope };
       return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
     },
@@ -281,7 +301,7 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
     async ({ renews, attestation, private_key_pem, context, session }) => {
       const renewed = buildAttestation(toAttestationInput(attestation), { renews });
       const signed = signAttestation(renewed, private_key_pem);
-      const envelope = emit("arr.attestation.renewed", { signed_attestation: signed, context }, session);
+      const envelope = emit("arr.attestation.renewed", eventPayload({ signed_attestation: signed, context: cleanContext(context) }), session);
       const payload = { signed_attestation: signed, event: envelope };
       return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
     },
@@ -298,20 +318,21 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
       session: z.string().optional(),
     },
     async ({ signed_attestation, file_path, mode, output_path, context, session }) => {
+      const cleaned = cleanSignedAttestation(signed_attestation);
       const result = await publishSignedAttestation(
-        signed_attestation as SignedAttestation,
+        cleaned,
         file_path,
         mode ?? "auto",
         output_path,
       );
-      const enrichedContext = {
-        ...context,
+      const enrichedContext = stripUndefined({
+        ...(context ?? {}),
         file_path: context?.file_path ?? file_path,
-      };
+      }) as ArrInteractionContext;
 
       const envelope = emit(
         "arr.attestation.published",
-        { signed_attestation, context: enrichedContext },
+        eventPayload({ signed_attestation: cleaned, context: enrichedContext }),
         session,
       );
 
@@ -329,13 +350,14 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
       session: z.string().optional(),
     },
     async ({ signed_attestation, public_key_pem, context, session }) => {
+      const cleaned = cleanSignedAttestation(signed_attestation);
       const result = verifyAttestation(
-        signed_attestation as SignedAttestation,
+        cleaned,
         public_key_pem,
       );
       const envelope = emit(
         "arr.attestation.verified",
-        { signed_attestation, context },
+        eventPayload({ signed_attestation: cleaned, context: cleanContext(context) }),
         session,
       );
       const payload = { result, event: envelope };
@@ -406,7 +428,7 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
         signature: `${ED25519_PREFIX}${encodeBase64Url(signature)}`,
       };
 
-      const envelope = emit("arr.attestation.revoked", { revocation: signed, context }, session);
+      const envelope = emit("arr.attestation.revoked", eventPayload({ revocation: signed, context: cleanContext(context) }), session);
       const payload = { revocation: signed, event: envelope };
       return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
     },
