@@ -30,6 +30,20 @@ const server = createArrMcpServer({
 await server.start();
 ```
 
+## CLI runner
+
+```bash
+arr-mcp --transport http --port 8787
+```
+
+Flags:
+- `--transport` (`stdio` | `http` | `both`)
+- `--host`
+- `--port`
+- `--mcp-sse-path`
+- `--mcp-message-path`
+- `--events-path`
+
 ## License
 
 CC0-1.0
