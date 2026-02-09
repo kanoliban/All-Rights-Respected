@@ -25,6 +25,7 @@ Last updated: 2026-02-05
 | `docs/RELEASE-v0.1.10.md` | Banner spacing (letter separation) + website quickstart sync |
 | `docs/PUBLISHING.md` | npm publication policy, compatibility rules, and release gates |
 | `docs/METRICS.md` | Adoption and contributor throughput tracking |
+| `docs/arr-interaction-layer.md` | Non-normative vision doc for ARR interaction workflows |
 | `CONTRIBUTING.md` | Contributor workflow and guardrails |
 | `SECURITY.md` | Vulnerability reporting and security response policy |
 | `thesis.html` | Philosophy and framing |

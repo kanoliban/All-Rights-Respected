@@ -34,6 +34,8 @@ ARR attestations are:
 - **Revocable** — creators can withdraw attestations at any time
 - **Privacy-preserving** — identity is optional; pseudonymous claims are valid
 
+Non-normative interaction guidance is captured in `docs/arr-interaction-layer.md`. This document does not add protocol requirements.
+
 ---
 
 ## 2. Attestation Format
