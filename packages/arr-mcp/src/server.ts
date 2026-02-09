@@ -1,7 +1,10 @@
 import { createPrivateKey, randomUUID, sign as signBytes } from "node:crypto";
+import { EventEmitter } from "node:events";
+import { createServer, type IncomingMessage, type Server as HttpServer, type ServerResponse } from "node:http";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import {
@@ -10,9 +13,9 @@ import {
   signAttestation,
   verifyAttestation,
   writeSidecar,
-  type Attestation,
   type SignedAttestation,
 } from "@allrightsrespected/sdk";
+import { buildAttestation, canonicalizeRecord, type AttestationInput } from "./internal.js";
 import type {
   ArrEvent,
   ArrEventEnvelope,
@@ -28,6 +31,11 @@ const ED25519_PREFIX = "ed25519:";
 
 const DEFAULT_EVENT_LIMIT = 100;
 const MAX_EVENT_BUFFER = 1000;
+const DEFAULT_HTTP_HOST = "127.0.0.1";
+const DEFAULT_HTTP_PORT = 8787;
+const DEFAULT_MCP_SSE_PATH = "/sse";
+const DEFAULT_MCP_MESSAGE_PATH = "/messages";
+const DEFAULT_EVENTS_PATH = "/events";
 
 function encodeBase64Url(buffer: Buffer): string {
   return buffer
@@ -35,29 +43,6 @@ function encodeBase64Url(buffer: Buffer): string {
     .replace(/=/g, "")
     .replace(/\+/g, "-")
     .replace(/\//g, "_");
-}
-
-function canonicalizeRecord(value: unknown): string {
-  function sortValue(entry: unknown): unknown {
-    if (Array.isArray(entry)) {
-      return entry.map((item) => sortValue(item));
-    }
-
-    if (entry && typeof entry === "object") {
-      const entries = Object.entries(entry as Record<string, unknown>).sort(([left], [right]) =>
-        left.localeCompare(right),
-      );
-      const sorted: Record<string, unknown> = {};
-      for (const [key, item] of entries) {
-        sorted[key] = sortValue(item);
-      }
-      return sorted;
-    }
-
-    return entry;
-  }
-
-  return JSON.stringify(sortValue(value));
 }
 
 function defaultMetadataOutputPath(inputPath: string): string {
@@ -79,6 +64,28 @@ function buildEvent(type: ArrEventType, payload?: ArrEventPayload, session?: str
   };
 
   return { event };
+}
+
+function writeSse(res: ServerResponse, data: unknown): void {
+  res.write(`data: ${JSON.stringify(data)}\n\n`);
+}
+
+async function readJsonBody(req: IncomingMessage): Promise<unknown> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+
+  if (chunks.length === 0) {
+    return undefined;
+  }
+
+  const raw = Buffer.concat(chunks).toString("utf8").trim();
+  if (!raw) {
+    return undefined;
+  }
+
+  return JSON.parse(raw);
 }
 
 function pushEvent(events: ArrEventEnvelope[], envelope: ArrEventEnvelope): void {
@@ -134,11 +141,28 @@ async function publishSignedAttestation(
 export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
   const server = new McpServer({ name: options.name, version: options.version });
   const events: ArrEventEnvelope[] = [];
-  let transport: StdioServerTransport | null = null;
+  const emitter = new EventEmitter();
+  emitter.setMaxListeners(0);
+  const eventStreams = new Set<ServerResponse>();
+  const sseSessions = new Map<string, SSEServerTransport>();
+  let stdioTransport: StdioServerTransport | null = null;
+  let httpServer: HttpServer | null = null;
+
+  const httpConfig = {
+    host: options.http?.host ?? DEFAULT_HTTP_HOST,
+    port: options.http?.port ?? DEFAULT_HTTP_PORT,
+    mcpSsePath: options.http?.mcpSsePath ?? DEFAULT_MCP_SSE_PATH,
+    mcpMessagePath: options.http?.mcpMessagePath ?? DEFAULT_MCP_MESSAGE_PATH,
+    eventsPath: options.http?.eventsPath ?? DEFAULT_EVENTS_PATH,
+  };
 
   const emit = (type: ArrEventType, payload?: ArrEventPayload, session?: string): ArrEventEnvelope => {
     const envelope = buildEvent(type, payload, session);
     pushEvent(events, envelope);
+    emitter.emit("event", envelope);
+    for (const res of eventStreams) {
+      writeSse(res, envelope);
+    }
     return envelope;
   };
 
@@ -185,6 +209,21 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
     signature: z.string(),
   });
 
+  const toAttestationInput = (input: z.infer<typeof attestationSchema>): AttestationInput => ({
+    creator: input.creator,
+    id: input.id,
+    created: input.created,
+    intent: input.intent,
+    tool: input.tool,
+    upstream: input.upstream,
+    content_hash: input.content_hash,
+    expires: input.expires,
+    revocable: input.revocable,
+    license: input.license,
+    renews: input.renews,
+    extensions: input.extensions,
+  });
+
   server.tool(
     "arr.events.list",
     {
@@ -205,31 +244,7 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
       session: z.string().optional(),
     },
     async ({ attestation, context, session }) => {
-      const created = attestation.created ?? new Date().toISOString();
-      const id = attestation.id ?? randomUUID();
-
-      if (attestation.expires) {
-        const parsed = new Date(attestation.expires);
-        if (Number.isNaN(parsed.getTime())) {
-          throw new Error("expires must be a valid ISO-8601 date.");
-        }
-      }
-
-      const draft: Attestation = {
-        version: "arr/0.1",
-        id,
-        created,
-        creator: attestation.creator,
-        intent: attestation.intent,
-        tool: attestation.tool,
-        upstream: attestation.upstream,
-        content_hash: attestation.content_hash,
-        expires: attestation.expires,
-        revocable: attestation.revocable ?? true,
-        license: attestation.license,
-        renews: attestation.renews,
-        extensions: attestation.extensions,
-      };
+      const draft = buildAttestation(toAttestationInput(attestation));
 
       const envelope = emit("arr.attestation.draft.created", { attestation: draft, context }, session);
       const payload = { attestation: draft, event: envelope };
@@ -246,27 +261,27 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
       session: z.string().optional(),
     },
     async ({ attestation, private_key_pem, context, session }) => {
-      const created = attestation.created ?? new Date().toISOString();
-      const id = attestation.id ?? randomUUID();
-
-      const unsigned: Attestation = {
-        version: "arr/0.1",
-        id,
-        created,
-        creator: attestation.creator,
-        intent: attestation.intent,
-        tool: attestation.tool,
-        upstream: attestation.upstream,
-        content_hash: attestation.content_hash,
-        expires: attestation.expires,
-        revocable: attestation.revocable ?? true,
-        license: attestation.license,
-        renews: attestation.renews,
-        extensions: attestation.extensions,
-      };
-
+      const unsigned = buildAttestation(toAttestationInput(attestation));
       const signed = signAttestation(unsigned, private_key_pem);
       const envelope = emit("arr.attestation.signed", { signed_attestation: signed, context }, session);
+      const payload = { signed_attestation: signed, event: envelope };
+      return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
+    },
+  );
+
+  server.tool(
+    "arr.attestation.renew",
+    {
+      renews: z.string(),
+      attestation: attestationSchema,
+      private_key_pem: z.string(),
+      context: contextSchema,
+      session: z.string().optional(),
+    },
+    async ({ renews, attestation, private_key_pem, context, session }) => {
+      const renewed = buildAttestation(toAttestationInput(attestation), { renews });
+      const signed = signAttestation(renewed, private_key_pem);
+      const envelope = emit("arr.attestation.renewed", { signed_attestation: signed, context }, session);
       const payload = { signed_attestation: signed, event: envelope };
       return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
     },
@@ -329,6 +344,44 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
   );
 
   server.tool(
+    "arr.events.watch",
+    {
+      since_id: z.string().optional(),
+      timeout_ms: z.number().int().min(250).max(120000).optional(),
+      limit: z.number().int().min(1).max(500).optional(),
+    },
+    async ({ since_id, timeout_ms, limit }) => {
+      const existing = listEvents(events, since_id, limit ?? DEFAULT_EVENT_LIMIT);
+      if (existing.length > 0) {
+        return { content: [{ type: "text", text: JSON.stringify({ events: existing }, null, 2) }] };
+      }
+
+      const timeout = timeout_ms ?? 30000;
+
+      const next = await new Promise<ArrEventEnvelope | null>((resolve) => {
+        const handler = (envelope: ArrEventEnvelope) => {
+          clearTimeout(timer);
+          emitter.removeListener("event", handler);
+          resolve(envelope);
+        };
+
+        const timer = setTimeout(() => {
+          emitter.removeListener("event", handler);
+          resolve(null);
+        }, timeout);
+
+        emitter.on("event", handler);
+      });
+
+      const payload = next
+        ? { events: listEvents(events, since_id, limit ?? DEFAULT_EVENT_LIMIT) }
+        : { events: [] };
+
+      return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
+    },
+  );
+
+  server.tool(
     "arr.revocation.create",
     {
       attestation_id: z.string(),
@@ -361,13 +414,96 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
 
   return {
     async start(): Promise<void> {
-      transport = new StdioServerTransport();
-      await server.connect(transport);
+      const mode = options.transport ?? "stdio";
+
+      if (mode === "stdio" || mode === "both") {
+        stdioTransport = new StdioServerTransport();
+        await server.connect(stdioTransport);
+      }
+
+      if (mode === "http" || mode === "both") {
+        httpServer = createServer(async (req, res) => {
+          const url = new URL(req.url ?? "/", `http://${httpConfig.host}:${httpConfig.port}`);
+
+          if (req.method === "GET" && url.pathname === httpConfig.eventsPath) {
+            res.writeHead(200, {
+              "Content-Type": "text/event-stream",
+              "Cache-Control": "no-cache",
+              Connection: "keep-alive",
+            });
+
+            const sinceId = url.searchParams.get("since_id") ?? undefined;
+            const backlog = listEvents(events, sinceId, DEFAULT_EVENT_LIMIT);
+            backlog.forEach((entry) => writeSse(res, entry));
+
+            eventStreams.add(res);
+            req.on("close", () => {
+              eventStreams.delete(res);
+            });
+            return;
+          }
+
+          if (req.method === "GET" && url.pathname === httpConfig.mcpSsePath) {
+            const transport = new SSEServerTransport(httpConfig.mcpMessagePath, res);
+            sseSessions.set(transport.sessionId, transport);
+            req.on("close", () => {
+              sseSessions.delete(transport.sessionId);
+            });
+            await server.connect(transport);
+            return;
+          }
+
+          if (req.method === "POST" && url.pathname === httpConfig.mcpMessagePath) {
+            const sessionId = url.searchParams.get("sessionId");
+            if (!sessionId) {
+              res.writeHead(400, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: "Missing sessionId query param." }));
+              return;
+            }
+
+            const transport = sseSessions.get(sessionId);
+            if (!transport) {
+              res.writeHead(404, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: "Unknown sessionId." }));
+              return;
+            }
+
+            let body: unknown;
+            try {
+              body = await readJsonBody(req);
+            } catch (error) {
+              res.writeHead(400, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: "Invalid JSON body." }));
+              return;
+            }
+
+            await transport.handlePostMessage(req, res, body);
+            return;
+          }
+
+          res.writeHead(404, { "Content-Type": "text/plain" });
+          res.end("Not found");
+        });
+
+        await new Promise<void>((resolve) => {
+          httpServer?.listen(httpConfig.port, httpConfig.host, () => resolve());
+        });
+      }
     },
     async stop(): Promise<void> {
-      if (transport) {
-        await transport.close();
+      if (stdioTransport) {
+        await stdioTransport.close();
       }
+
+      if (httpServer) {
+        await new Promise<void>((resolve) => {
+          httpServer?.close(() => resolve());
+        });
+        httpServer = null;
+      }
+
+      sseSessions.clear();
+      eventStreams.clear();
       await server.close();
     },
   };

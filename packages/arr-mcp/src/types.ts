@@ -59,6 +59,14 @@ export interface ArrEventEnvelope {
 export interface ArrMcpServerOptions {
   name: string;
   version: string;
+  transport?: "stdio" | "http" | "both";
+  http?: {
+    host?: string;
+    port?: number;
+    mcpSsePath?: string;
+    mcpMessagePath?: string;
+    eventsPath?: string;
+  };
 }
 
 export interface ArrMcpServer {
