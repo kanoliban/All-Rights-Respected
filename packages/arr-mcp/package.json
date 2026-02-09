@@ -39,6 +39,8 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@allrightsrespected/sdk": "0.1.1"
+    "@allrightsrespected/sdk": "0.1.1",
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "zod": "^3.23.8"
   }
 }
