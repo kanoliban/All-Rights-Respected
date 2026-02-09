@@ -4,7 +4,7 @@
 
 **Version:** 0.1.0
 **Status:** Draft
-**Updated:** 2026-01-29
+**Updated:** 2026-02-09
 
 ---
 
@@ -19,6 +19,7 @@
 7. [Privacy Considerations](#7-privacy-considerations)
 8. [Versioning Strategy](#8-versioning-strategy)
 9. [Conformance Levels](#9-conformance-levels)
+10. [Interaction Events (Optional)](#10-interaction-events-optional)
 
 ---
 
@@ -54,9 +55,11 @@ An ARR attestation is a structured document in JSON or YAML format. All implemen
     "intent": "description of creative intent",
     "tool": "tool/version",
     "upstream": ["array of upstream attestation IDs"],
+    "content_hash": "sha256:...",
     "expires": "ISO-8601 date",
     "revocable": true,
     "license": "optional license identifier",
+    "renews": "optional attestation id",
     "extensions": {}
   },
   "signature": "algorithm:base64-encoded-signature"
@@ -80,9 +83,11 @@ An ARR attestation is a structured document in JSON or YAML format. All implemen
 | `intent`     | string  | —         | Human-readable description of creative intent         |
 | `tool`       | string  | —         | Tool used to create the work. Format: `name/version`  |
 | `upstream`   | array   | `[]`      | IDs of upstream attestations this work builds upon    |
+| `content_hash` | string | —       | Content hash of the work before embedding             |
 | `expires`    | string  | 5 years   | ISO-8601 date when attestation expires                |
 | `revocable`  | boolean | `true`    | Whether creator can revoke the attestation            |
 | `license`    | string  | —         | SPDX license identifier or custom license URL         |
+| `renews`     | string  | —         | Attestation ID that this attestation renews           |
 | `extensions` | object  | `{}`      | Custom fields for platform-specific data              |
 
 ### 2.4 Example
@@ -402,6 +407,63 @@ Complete implementation:
 - Provide creator identity verification
 
 > **Note:** All conformance levels are valid implementations. Platforms should choose the level appropriate for their use case.
+
+---
+
+## 10. Interaction Events (Optional)
+
+ARR tools MAY emit interaction events to support live, in-context workflows. This section defines a
+minimal event envelope for interoperability. Emitting events is OPTIONAL and does not affect core
+attestation validity.
+
+### 10.1 Event Envelope
+
+If emitted, events MUST follow this shape:
+
+```json
+{
+  "event": {
+    "version": "arr/event/0.1",
+    "id": "uuid-v4",
+    "type": "arr.attestation.draft.created",
+    "created": "ISO-8601 timestamp",
+    "session": "optional session identifier",
+    "payload": {}
+  }
+}
+```
+
+Required fields: `version`, `id`, `type`, `created`.  
+Optional fields: `session`, `payload`.
+
+### 10.2 Event Types (Recommended)
+
+| Type | Meaning |
+|------|---------|
+| `arr.attestation.draft.created` | Draft intent captured, not signed |
+| `arr.attestation.signed` | Attestation signed |
+| `arr.attestation.published` | Attestation embedded or sidecar written |
+| `arr.attestation.verified` | Verification completed |
+| `arr.attestation.renewed` | Attestation renewed |
+| `arr.attestation.revoked` | Attestation revoked |
+
+### 10.3 Event Payload (Recommended)
+
+If provided, `payload` SHOULD include:
+
+- `attestation` — unsigned attestation object
+- `signed_attestation` — full signed attestation object
+- `revocation` — revocation record (Section 5.3.1)
+- `context` — interaction context captured at creation time
+
+Recommended `context` fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `content_hash` | string | Content hash of the work prior to embedding |
+| `file_path` | string | Local or workspace-relative path |
+| `tool` | string | Tool/version capturing the intent |
+| `selection` | object | Selection context (bounds, text, or object id) |
 
 ---
 

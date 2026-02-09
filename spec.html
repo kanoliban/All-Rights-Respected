@@ -694,7 +694,7 @@
       <div class="meta">
         <span>Version: 0.1.0</span>
         <span>Status: Draft</span>
-        <span>Updated: 2026-01-29</span>
+        <span>Updated: 2026-02-09</span>
       </div>
     </div>
 
@@ -709,6 +709,7 @@
         <li><a href="#privacy">Privacy Considerations</a></li>
         <li><a href="#versioning">Versioning Strategy</a></li>
         <li><a href="#conformance">Conformance Levels</a></li>
+        <li><a href="#interaction-events">Interaction Events (Optional)</a></li>
       </ol>
     </nav>
 
@@ -740,9 +741,11 @@
     <span class="key">"intent"</span>: <span class="string">"description of creative intent"</span>,
     <span class="key">"tool"</span>: <span class="string">"tool/version"</span>,
     <span class="key">"upstream"</span>: [<span class="comment">/* array of upstream attestation IDs */</span>],
+    <span class="key">"content_hash"</span>: <span class="string">"sha256:..."</span>,
     <span class="key">"expires"</span>: <span class="string">"ISO-8601 date"</span>,
     <span class="key">"revocable"</span>: <span class="bool">true</span>,
     <span class="key">"license"</span>: <span class="string">"optional license identifier"</span>,
+    <span class="key">"renews"</span>: <span class="string">"optional attestation id"</span>,
     <span class="key">"extensions"</span>: {<span class="comment">/* optional custom fields */</span>}
   },
   <span class="key">"signature"</span>: <span class="string">"algorithm:base64-encoded-signature"</span>
@@ -816,6 +819,12 @@
             <td>IDs of upstream attestations this work builds upon</td>
           </tr>
           <tr>
+            <td><code>content_hash</code></td>
+            <td>string</td>
+            <td>&mdash;</td>
+            <td>Content hash of the work before embedding</td>
+          </tr>
+          <tr>
             <td><code>expires</code></td>
             <td>string</td>
             <td>5 years</td>
@@ -832,6 +841,12 @@
             <td>string</td>
             <td>&mdash;</td>
             <td>SPDX license identifier or custom license URL</td>
+          </tr>
+          <tr>
+            <td><code>renews</code></td>
+            <td>string</td>
+            <td>&mdash;</td>
+            <td>Attestation ID that this attestation renews</td>
           </tr>
           <tr>
             <td><code>extensions</code></td>
@@ -1225,6 +1240,103 @@ artwork.png.arr    <span class="comment"># contains JSON attestation</span></cod
         <div class="note-title">NOTE</div>
         <p>All conformance levels are valid implementations. Platforms should choose the level appropriate for their use case.</p>
       </div>
+    </section>
+
+    <section id="interaction-events">
+      <h2>10. Interaction Events (Optional)</h2>
+      <p>ARR tools MAY emit interaction events to support live, in-context workflows. This section defines a minimal event envelope for interoperability. Emitting events is OPTIONAL and does not affect core attestation validity.</p>
+
+      <h3>10.1 Event Envelope</h3>
+      <p>If emitted, events MUST follow this shape:</p>
+      <pre><code>{
+  "event": {
+    "version": "arr/event/0.1",
+    "id": "uuid-v4",
+    "type": "arr.attestation.draft.created",
+    "created": "ISO-8601 timestamp",
+    "session": "optional session identifier",
+    "payload": {}
+  }
+}</code></pre>
+      <p>Required fields: <code>version</code>, <code>id</code>, <code>type</code>, <code>created</code>. Optional fields: <code>session</code>, <code>payload</code>.</p>
+
+      <h3>10.2 Event Types (Recommended)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>arr.attestation.draft.created</code></td>
+            <td>Draft intent captured, not signed</td>
+          </tr>
+          <tr>
+            <td><code>arr.attestation.signed</code></td>
+            <td>Attestation signed</td>
+          </tr>
+          <tr>
+            <td><code>arr.attestation.published</code></td>
+            <td>Attestation embedded or sidecar written</td>
+          </tr>
+          <tr>
+            <td><code>arr.attestation.verified</code></td>
+            <td>Verification completed</td>
+          </tr>
+          <tr>
+            <td><code>arr.attestation.renewed</code></td>
+            <td>Attestation renewed</td>
+          </tr>
+          <tr>
+            <td><code>arr.attestation.revoked</code></td>
+            <td>Attestation revoked</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>10.3 Event Payload (Recommended)</h3>
+      <p>If provided, <code>payload</code> SHOULD include:</p>
+      <ul>
+        <li><code>attestation</code> &mdash; unsigned attestation object</li>
+        <li><code>signed_attestation</code> &mdash; full signed attestation object</li>
+        <li><code>revocation</code> &mdash; revocation record (Section 5.3.1)</li>
+        <li><code>context</code> &mdash; interaction context captured at creation time</li>
+      </ul>
+
+      <p>Recommended <code>context</code> fields:</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>content_hash</code></td>
+            <td>string</td>
+            <td>Content hash of the work prior to embedding</td>
+          </tr>
+          <tr>
+            <td><code>file_path</code></td>
+            <td>string</td>
+            <td>Local or workspace-relative path</td>
+          </tr>
+          <tr>
+            <td><code>tool</code></td>
+            <td>string</td>
+            <td>Tool/version capturing the intent</td>
+          </tr>
+          <tr>
+            <td><code>selection</code></td>
+            <td>object</td>
+            <td>Selection context (bounds, text, or object id)</td>
+          </tr>
+        </tbody>
+      </table>
     </section>
   </main>
 

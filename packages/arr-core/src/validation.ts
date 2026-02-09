@@ -34,6 +34,10 @@ export function isAttestation(value: unknown): value is Attestation {
     return false;
   }
 
+  if (value.content_hash !== undefined && typeof value.content_hash !== "string") {
+    return false;
+  }
+
   if (value.expires !== undefined && typeof value.expires !== "string") {
     return false;
   }
@@ -43,6 +47,10 @@ export function isAttestation(value: unknown): value is Attestation {
   }
 
   if (value.license !== undefined && typeof value.license !== "string") {
+    return false;
+  }
+
+  if (value.renews !== undefined && typeof value.renews !== "string") {
     return false;
   }
 

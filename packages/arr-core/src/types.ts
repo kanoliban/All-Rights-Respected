@@ -12,9 +12,11 @@ export type Attestation = {
   intent?: string;
   tool?: string;
   upstream?: string[];
+  content_hash?: string;
   expires?: string;
   revocable?: boolean;
   license?: string;
+  renews?: string;
   extensions?: Record<string, unknown>;
 };
 

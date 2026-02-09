@@ -1,0 +1,44 @@
+{
+  "name": "@allrightsrespected/mcp",
+  "version": "0.1.0",
+  "description": "ARR MCP server skeleton for evented attestation workflows.",
+  "license": "CC0-1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "keywords": [
+    "arr",
+    "attribution",
+    "mcp",
+    "events"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kanoliban/All-Rights-Respected.git",
+    "directory": "packages/arr-mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/kanoliban/All-Rights-Respected/issues"
+  },
+  "homepage": "https://www.allrightsrespected.com",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@allrightsrespected/sdk": "0.1.1"
+  }
+}
