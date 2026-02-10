@@ -1,0 +1,44 @@
+{
+  "name": "@allrightsrespected/widget",
+  "version": "0.1.0",
+  "description": "ARR browser widget (injected overlay) for in-context attestation workflows.",
+  "license": "CC0-1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "keywords": [
+    "arr",
+    "widget",
+    "annotation",
+    "attribution"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kanoliban/All-Rights-Respected.git",
+    "directory": "packages/arr-widget"
+  },
+  "bugs": {
+    "url": "https://github.com/kanoliban/All-Rights-Respected/issues"
+  },
+  "homepage": "https://www.allrightsrespected.com",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@allrightsrespected/mcp": "0.1.0"
+  }
+}
