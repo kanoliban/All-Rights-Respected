@@ -14,6 +14,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./widget": {
+      "types": "./dist/widget-contract.d.ts",
+      "import": "./dist/widget-contract.js"
     }
   },
   "files": [

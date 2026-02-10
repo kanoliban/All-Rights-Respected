@@ -16,6 +16,15 @@ import {
   type SignedAttestation,
 } from "@allrightsrespected/sdk";
 import { buildAttestation, canonicalizeRecord, stripUndefined, type AttestationInput } from "./internal.js";
+import {
+  WIDGET_API,
+  draftRequestSchema,
+  publishRequestSchema,
+  renewRequestSchema,
+  revokeRequestSchema,
+  signRequestSchema,
+  verifyRequestSchema,
+} from "./widget-contract.js";
 import type {
   ArrEvent,
   ArrEventEnvelope,
@@ -37,6 +46,11 @@ const DEFAULT_HTTP_PORT = 8787;
 const DEFAULT_MCP_SSE_PATH = "/sse";
 const DEFAULT_MCP_MESSAGE_PATH = "/messages";
 const DEFAULT_EVENTS_PATH = "/events";
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
 
 function encodeBase64Url(buffer: Buffer): string {
   return buffer
@@ -69,6 +83,18 @@ function buildEvent(type: ArrEventType, payload?: ArrEventPayload, session?: str
 
 function writeSse(res: ServerResponse, data: unknown): void {
   res.write(`data: ${JSON.stringify(data)}\n\n`);
+}
+
+function writeJson(res: ServerResponse, status: number, payload: unknown): void {
+  res.writeHead(status, {
+    ...CORS_HEADERS,
+    "Content-Type": "application/json",
+  });
+  res.end(JSON.stringify(payload));
+}
+
+function writeError(res: ServerResponse, status: number, message: string, details?: unknown): void {
+  writeJson(res, status, stripUndefined({ error: message, details }));
 }
 
 async function readJsonBody(req: IncomingMessage): Promise<unknown> {
@@ -233,6 +259,11 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
     return stripUndefined(ctx) as ArrInteractionContext;
   }
 
+  function contextFromWidget(ctx: unknown): ArrInteractionContext | undefined {
+    if (!ctx) return undefined;
+    return stripUndefined(ctx as Record<string, unknown>) as ArrInteractionContext;
+  }
+
   function cleanSignedAttestation(input: z.infer<typeof signedAttestationSchema>): SignedAttestation {
     return {
       attestation: stripUndefined(input.attestation) as SignedAttestation["attestation"],
@@ -240,8 +271,149 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
     };
   }
 
+  function toAttestationInputFromWidget(attestation: Record<string, unknown>): AttestationInput {
+    const { version: _version, ...rest } = attestation;
+    return stripUndefined(rest) as AttestationInput;
+  }
+
+  function toAttestationInputFromDraft(input: z.infer<typeof draftRequestSchema>): AttestationInput {
+    return stripUndefined({
+      creator: input.creator,
+      intent: input.intent,
+      tool: input.tool,
+      license: input.license,
+      upstream: input.upstream,
+      content_hash: input.content_hash,
+      expires: input.expires,
+      extensions: input.extensions,
+    }) as AttestationInput;
+  }
+
+  function toAttestationInputFromRenew(input: z.infer<typeof renewRequestSchema>): AttestationInput {
+    return stripUndefined({
+      creator: input.creator,
+      intent: input.intent,
+      tool: input.tool,
+      license: input.license,
+    }) as AttestationInput;
+  }
+
   function eventPayload(fields: Record<string, unknown>): ArrEventPayload {
     return stripUndefined(fields) as ArrEventPayload;
+  }
+
+  function handleDraft(
+    input: AttestationInput,
+    context: ArrInteractionContext | undefined,
+    session?: string,
+  ) {
+    const draft = buildAttestation(input);
+    const envelope = emit(
+      "arr.attestation.draft.created",
+      eventPayload({ attestation: draft, context }),
+      session,
+    );
+    return { attestation: draft, event: envelope };
+  }
+
+  function handleSign(
+    input: AttestationInput,
+    privateKeyPem: string,
+    context: ArrInteractionContext | undefined,
+    session?: string,
+  ) {
+    const unsigned = buildAttestation(input);
+    const signed = signAttestation(unsigned, privateKeyPem);
+    const envelope = emit(
+      "arr.attestation.signed",
+      eventPayload({ signed_attestation: signed, context }),
+      session,
+    );
+    return { signed_attestation: signed, event: envelope };
+  }
+
+  function handleRenew(
+    input: AttestationInput,
+    renews: string,
+    privateKeyPem: string,
+    context: ArrInteractionContext | undefined,
+    session?: string,
+  ) {
+    const renewed = buildAttestation(input, { renews });
+    const signed = signAttestation(renewed, privateKeyPem);
+    const envelope = emit(
+      "arr.attestation.renewed",
+      eventPayload({ signed_attestation: signed, context }),
+      session,
+    );
+    return { signed_attestation: signed, event: envelope };
+  }
+
+  async function handlePublish(
+    signedAttestation: SignedAttestation,
+    filePath: string,
+    mode: "auto" | "metadata" | "sidecar",
+    outputPath: string | undefined,
+    context: ArrInteractionContext | undefined,
+    session?: string,
+  ) {
+    const result = await publishSignedAttestation(signedAttestation, filePath, mode, outputPath);
+    const enrichedContext = stripUndefined({
+      ...(context ?? {}),
+      file_path: context?.file_path ?? filePath,
+    }) as ArrInteractionContext;
+
+    const envelope = emit(
+      "arr.attestation.published",
+      eventPayload({ signed_attestation: signedAttestation, context: enrichedContext }),
+      session,
+    );
+    return { result, event: envelope };
+  }
+
+  function handleVerify(
+    signedAttestation: SignedAttestation,
+    publicKeyPem: string | undefined,
+    context: ArrInteractionContext | undefined,
+    session?: string,
+  ) {
+    const result = verifyAttestation(signedAttestation, publicKeyPem);
+    const envelope = emit(
+      "arr.attestation.verified",
+      eventPayload({ signed_attestation: signedAttestation, context }),
+      session,
+    );
+    return { result, event: envelope };
+  }
+
+  function handleRevoke(
+    attestationId: string,
+    reason: string | undefined,
+    revokedAt: string | undefined,
+    privateKeyPem: string,
+    context: ArrInteractionContext | undefined,
+    session?: string,
+  ) {
+    const record = stripUndefined({
+      attestation_id: attestationId,
+      revoked_at: revokedAt ?? new Date().toISOString(),
+      reason,
+    });
+
+    const canonical = canonicalizeRecord(record);
+    const key = createPrivateKey(privateKeyPem);
+    const signature = signBytes(null, Buffer.from(canonical, "utf8"), key);
+    const signed: ArrSignedRevocation = {
+      revocation: record as ArrSignedRevocation["revocation"],
+      signature: `${ED25519_PREFIX}${encodeBase64Url(signature)}`,
+    };
+
+    const envelope = emit(
+      "arr.attestation.revoked",
+      eventPayload({ revocation: signed, context }),
+      session,
+    );
+    return { revocation: signed, event: envelope };
   }
 
   server.tool(
@@ -264,10 +436,7 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
       session: z.string().optional(),
     },
     async ({ attestation, context, session }) => {
-      const draft = buildAttestation(toAttestationInput(attestation));
-
-      const envelope = emit("arr.attestation.draft.created", eventPayload({ attestation: draft, context: cleanContext(context) }), session);
-      const payload = { attestation: draft, event: envelope };
+      const payload = handleDraft(toAttestationInput(attestation), cleanContext(context), session);
       return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
     },
   );
@@ -281,10 +450,12 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
       session: z.string().optional(),
     },
     async ({ attestation, private_key_pem, context, session }) => {
-      const unsigned = buildAttestation(toAttestationInput(attestation));
-      const signed = signAttestation(unsigned, private_key_pem);
-      const envelope = emit("arr.attestation.signed", eventPayload({ signed_attestation: signed, context: cleanContext(context) }), session);
-      const payload = { signed_attestation: signed, event: envelope };
+      const payload = handleSign(
+        toAttestationInput(attestation),
+        private_key_pem,
+        cleanContext(context),
+        session,
+      );
       return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
     },
   );
@@ -299,10 +470,13 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
       session: z.string().optional(),
     },
     async ({ renews, attestation, private_key_pem, context, session }) => {
-      const renewed = buildAttestation(toAttestationInput(attestation), { renews });
-      const signed = signAttestation(renewed, private_key_pem);
-      const envelope = emit("arr.attestation.renewed", eventPayload({ signed_attestation: signed, context: cleanContext(context) }), session);
-      const payload = { signed_attestation: signed, event: envelope };
+      const payload = handleRenew(
+        toAttestationInput(attestation),
+        renews,
+        private_key_pem,
+        cleanContext(context),
+        session,
+      );
       return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
     },
   );
@@ -319,24 +493,14 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
     },
     async ({ signed_attestation, file_path, mode, output_path, context, session }) => {
       const cleaned = cleanSignedAttestation(signed_attestation);
-      const result = await publishSignedAttestation(
+      const payload = await handlePublish(
         cleaned,
         file_path,
         mode ?? "auto",
         output_path,
-      );
-      const enrichedContext = stripUndefined({
-        ...(context ?? {}),
-        file_path: context?.file_path ?? file_path,
-      }) as ArrInteractionContext;
-
-      const envelope = emit(
-        "arr.attestation.published",
-        eventPayload({ signed_attestation: cleaned, context: enrichedContext }),
+        cleanContext(context),
         session,
       );
-
-      const payload = { result, event: envelope };
       return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
     },
   );
@@ -351,16 +515,12 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
     },
     async ({ signed_attestation, public_key_pem, context, session }) => {
       const cleaned = cleanSignedAttestation(signed_attestation);
-      const result = verifyAttestation(
+      const payload = handleVerify(
         cleaned,
         public_key_pem,
-      );
-      const envelope = emit(
-        "arr.attestation.verified",
-        eventPayload({ signed_attestation: cleaned, context: cleanContext(context) }),
+        cleanContext(context),
         session,
       );
-      const payload = { result, event: envelope };
       return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
     },
   );
@@ -414,22 +574,14 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
       session: z.string().optional(),
     },
     async ({ attestation_id, reason, revoked_at, private_key_pem, context, session }) => {
-      const record = {
+      const payload = handleRevoke(
         attestation_id,
-        revoked_at: revoked_at ?? new Date().toISOString(),
-        ...(reason ? { reason } : {}),
-      };
-
-      const canonical = canonicalizeRecord(record);
-      const key = createPrivateKey(private_key_pem);
-      const signature = signBytes(null, Buffer.from(canonical, "utf8"), key);
-      const signed: ArrSignedRevocation = {
-        revocation: record,
-        signature: `${ED25519_PREFIX}${encodeBase64Url(signature)}`,
-      };
-
-      const envelope = emit("arr.attestation.revoked", eventPayload({ revocation: signed, context: cleanContext(context) }), session);
-      const payload = { revocation: signed, event: envelope };
+        reason,
+        revoked_at,
+        private_key_pem,
+        cleanContext(context),
+        session,
+      );
       return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }] };
     },
   );
@@ -447,8 +599,16 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
         httpServer = createServer(async (req, res) => {
           const url = new URL(req.url ?? "/", `http://${httpConfig.host}:${httpConfig.port}`);
 
+          if (req.method === "OPTIONS") {
+            res.writeHead(204, CORS_HEADERS);
+            res.end();
+            return;
+          }
+
           if (req.method === "GET" && url.pathname === httpConfig.eventsPath) {
+            Object.entries(CORS_HEADERS).forEach(([key, value]) => res.setHeader(key, value));
             res.writeHead(200, {
+              ...CORS_HEADERS,
               "Content-Type": "text/event-stream",
               "Cache-Control": "no-cache",
               Connection: "keep-alive",
@@ -466,6 +626,7 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
           }
 
           if (req.method === "GET" && url.pathname === httpConfig.mcpSsePath) {
+            Object.entries(CORS_HEADERS).forEach(([key, value]) => res.setHeader(key, value));
             const transport = new SSEServerTransport(httpConfig.mcpMessagePath, res);
             sseSessions.set(transport.sessionId, transport);
             req.on("close", () => {
@@ -475,18 +636,181 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
             return;
           }
 
+          if (req.method === "POST" && url.pathname === WIDGET_API.draft) {
+            let body: unknown;
+            try {
+              body = await readJsonBody(req);
+            } catch {
+              writeError(res, 400, "Invalid JSON body.");
+              return;
+            }
+
+            const parsed = draftRequestSchema.safeParse(body);
+            if (!parsed.success) {
+              writeError(res, 400, "Invalid draft request.", parsed.error.flatten());
+              return;
+            }
+
+            const payload = handleDraft(
+              toAttestationInputFromDraft(parsed.data),
+              contextFromWidget(parsed.data.context),
+              parsed.data.session,
+            );
+            writeJson(res, 200, payload);
+            return;
+          }
+
+          if (req.method === "POST" && url.pathname === WIDGET_API.sign) {
+            let body: unknown;
+            try {
+              body = await readJsonBody(req);
+            } catch {
+              writeError(res, 400, "Invalid JSON body.");
+              return;
+            }
+
+            const parsed = signRequestSchema.safeParse(body);
+            if (!parsed.success) {
+              writeError(res, 400, "Invalid sign request.", parsed.error.flatten());
+              return;
+            }
+
+            const payload = handleSign(
+              toAttestationInputFromWidget(parsed.data.attestation as Record<string, unknown>),
+              parsed.data.private_key_pem,
+              contextFromWidget(parsed.data.context),
+              parsed.data.session,
+            );
+            writeJson(res, 200, payload);
+            return;
+          }
+
+          if (req.method === "POST" && url.pathname === WIDGET_API.publish) {
+            let body: unknown;
+            try {
+              body = await readJsonBody(req);
+            } catch {
+              writeError(res, 400, "Invalid JSON body.");
+              return;
+            }
+
+            const parsed = publishRequestSchema.safeParse(body);
+            if (!parsed.success) {
+              writeError(res, 400, "Invalid publish request.", parsed.error.flatten());
+              return;
+            }
+
+            const signed = cleanSignedAttestation({
+              attestation: parsed.data.signed_attestation.attestation as z.infer<typeof signedAttestationSchema>["attestation"],
+              signature: parsed.data.signed_attestation.signature,
+            });
+
+            const payload = await handlePublish(
+              signed,
+              parsed.data.file_path,
+              parsed.data.mode ?? "auto",
+              parsed.data.output_path,
+              contextFromWidget(parsed.data.context),
+              parsed.data.session,
+            );
+            writeJson(res, 200, payload);
+            return;
+          }
+
+          if (req.method === "POST" && url.pathname === WIDGET_API.verify) {
+            let body: unknown;
+            try {
+              body = await readJsonBody(req);
+            } catch {
+              writeError(res, 400, "Invalid JSON body.");
+              return;
+            }
+
+            const parsed = verifyRequestSchema.safeParse(body);
+            if (!parsed.success) {
+              writeError(res, 400, "Invalid verify request.", parsed.error.flatten());
+              return;
+            }
+
+            const signed = cleanSignedAttestation({
+              attestation: parsed.data.signed_attestation.attestation as z.infer<typeof signedAttestationSchema>["attestation"],
+              signature: parsed.data.signed_attestation.signature,
+            });
+
+            const payload = handleVerify(
+              signed,
+              parsed.data.public_key_pem,
+              contextFromWidget(parsed.data.context),
+              parsed.data.session,
+            );
+            writeJson(res, 200, payload);
+            return;
+          }
+
+          if (req.method === "POST" && url.pathname === WIDGET_API.renew) {
+            let body: unknown;
+            try {
+              body = await readJsonBody(req);
+            } catch {
+              writeError(res, 400, "Invalid JSON body.");
+              return;
+            }
+
+            const parsed = renewRequestSchema.safeParse(body);
+            if (!parsed.success) {
+              writeError(res, 400, "Invalid renew request.", parsed.error.flatten());
+              return;
+            }
+
+            const payload = handleRenew(
+              toAttestationInputFromRenew(parsed.data),
+              parsed.data.renews,
+              parsed.data.private_key_pem,
+              contextFromWidget(parsed.data.context),
+              parsed.data.session,
+            );
+            writeJson(res, 200, payload);
+            return;
+          }
+
+          if (req.method === "POST" && url.pathname === WIDGET_API.revoke) {
+            let body: unknown;
+            try {
+              body = await readJsonBody(req);
+            } catch {
+              writeError(res, 400, "Invalid JSON body.");
+              return;
+            }
+
+            const parsed = revokeRequestSchema.safeParse(body);
+            if (!parsed.success) {
+              writeError(res, 400, "Invalid revoke request.", parsed.error.flatten());
+              return;
+            }
+
+            const payload = handleRevoke(
+              parsed.data.attestation_id,
+              parsed.data.reason,
+              undefined,
+              parsed.data.private_key_pem,
+              contextFromWidget(parsed.data.context),
+              parsed.data.session,
+            );
+            writeJson(res, 200, payload);
+            return;
+          }
+
           if (req.method === "POST" && url.pathname === httpConfig.mcpMessagePath) {
+            Object.entries(CORS_HEADERS).forEach(([key, value]) => res.setHeader(key, value));
             const sessionId = url.searchParams.get("sessionId");
             if (!sessionId) {
-              res.writeHead(400, { "Content-Type": "application/json" });
-              res.end(JSON.stringify({ error: "Missing sessionId query param." }));
+              writeError(res, 400, "Missing sessionId query param.");
               return;
             }
 
             const transport = sseSessions.get(sessionId);
             if (!transport) {
-              res.writeHead(404, { "Content-Type": "application/json" });
-              res.end(JSON.stringify({ error: "Unknown sessionId." }));
+              writeError(res, 404, "Unknown sessionId.");
               return;
             }
 
@@ -494,8 +818,7 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
             try {
               body = await readJsonBody(req);
             } catch (error) {
-              res.writeHead(400, { "Content-Type": "application/json" });
-              res.end(JSON.stringify({ error: "Invalid JSON body." }));
+              writeError(res, 400, "Invalid JSON body.");
               return;
             }
 
@@ -503,8 +826,11 @@ export function createArrMcpServer(options: ArrMcpServerOptions): ArrMcpServer {
             return;
           }
 
-          res.writeHead(404, { "Content-Type": "text/plain" });
-          res.end("Not found");
+          res.writeHead(404, {
+            ...CORS_HEADERS,
+            "Content-Type": "application/json",
+          });
+          res.end(JSON.stringify({ error: "Not found" }));
         });
 
         await new Promise<void>((resolve) => {
