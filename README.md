@@ -66,6 +66,7 @@ All of that is useful.
 ## Working docs
 
 - [Documentation map](DOCS-MAP.md)
+- [Interaction layer (vision doc)](docs/arr-interaction-layer.md)
 - [Product plan](PLAN.md)
 - [Implementation guide (M1)](docs/IMPLEMENTATION.md)
 - [CLI how-to (creators)](docs/CLI-HOWTO.md)
@@ -76,10 +77,17 @@ All of that is useful.
 - [Funding model](FUNDING.md)
 - [Bounty framework](BOUNTIES.md)
 
+## Interaction layer (MCP + widget)
+
+Packages in this repo:
+- `@allrightsrespected/mcp` — MCP server + HTTP/SSE + REST facade. See `packages/arr-mcp/README.md`.
+- `@allrightsrespected/widget` — injected browser overlay. See `packages/arr-widget/README.md`.
+
 ## M1 reference implementation (in this repo)
 
 Current implementation status is build-first and in-repo.
 Published npm packages: `@allrightsrespected/sdk` and `@allrightsrespected/cli` (v0.1.10).
+Experimental in-repo packages (not published): `@allrightsrespected/mcp`, `@allrightsrespected/widget`.
 
 ```bash
 npm install -g @allrightsrespected/cli
