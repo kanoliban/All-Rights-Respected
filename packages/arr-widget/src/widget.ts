@@ -286,6 +286,17 @@ export class ArrWidget {
     this.setStatus("Selection captured");
   }
 
+  private buildContext(): ReturnType<typeof buildWidgetContext> {
+    const input: import("./context.js").WidgetContextInput = {
+      toolVersion: this.toolVersion,
+      session: this.sessionId,
+    };
+    if (this.state.selection) {
+      input.selection = this.state.selection;
+    }
+    return buildWidgetContext(input);
+  }
+
   private setStatus(message: string): void {
     this.statusEl.textContent = message;
   }
@@ -323,14 +334,7 @@ export class ArrWidget {
       return;
     }
 
-    const contextInput: import("./context.js").WidgetContextInput = {
-      toolVersion: this.toolVersion,
-      session: this.sessionId,
-    };
-    if (this.state.selection) {
-      contextInput.selection = this.state.selection;
-    }
-    const context = buildWidgetContext(contextInput);
+    const context = this.buildContext();
 
     const payload = {
       creator,
@@ -367,11 +371,7 @@ export class ArrWidget {
       return;
     }
 
-    const context = buildWidgetContext({
-      toolVersion: this.toolVersion,
-      selection: this.state.selection ?? undefined,
-      session: this.sessionId,
-    });
+    const context = this.buildContext();
 
     const payload = {
       renews,
@@ -407,11 +407,7 @@ export class ArrWidget {
 
     const reason = window.prompt("Reason (optional)") || undefined;
 
-    const context = buildWidgetContext({
-      toolVersion: this.toolVersion,
-      selection: this.state.selection ?? undefined,
-      session: this.sessionId,
-    });
+    const context = this.buildContext();
 
     const payload = {
       attestation_id: attestationId,
