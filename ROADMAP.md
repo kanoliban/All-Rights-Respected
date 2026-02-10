@@ -1,7 +1,7 @@
 # ARR Roadmap
 
 Status: Active execution plan  
-Last updated: 2026-02-04
+Last updated: 2026-02-09
 
 ## Objective
 
@@ -84,6 +84,34 @@ Exit criteria:
 - installable package path is stable and documented
 - reference integrations can use published packages without repo cloning
 - fixture suite expands with new adapter coverage
+
+## M2.1 - Interaction layer (complete)
+
+Outcome: browser-facing annotation UX and evented MCP server.
+
+- [x] MCP server with HTTP/SSE transport and REST facade (`@allrightsrespected/mcp`)
+- [x] Widget data contract (Zod schemas, state machine, API paths)
+- [x] Browser widget with selection capture, draft/renew/revoke, live SSE updates (`@allrightsrespected/widget`)
+- [x] REST integration tests (16 tests covering all endpoints + full lifecycle)
+- [x] curl smoke script (`examples/smoke.sh`)
+
+Exit criteria:
+- Server runs locally and accepts REST requests from browser or curl
+- Widget captures selections and creates drafts against the server
+- Full attestation lifecycle exercisable via curl without Node dependencies
+
+## M2.2 - Chrome extension (planned)
+
+Outcome: ARR widget delivered as a Chrome extension for zero-integration page annotation.
+
+- [ ] Chrome extension scaffold (manifest v3, service worker, content script)
+- [ ] Inject `@allrightsrespected/widget` into any page via content script
+- [ ] Extension popup for server endpoint configuration
+- [ ] Permission model for which sites the widget activates on
+
+Exit criteria:
+- Install extension from local build, navigate to any page, create an attestation
+- No modifications required to the target page
 
 ## M3 - Adoption primitives (Weeks 12-16)
 
