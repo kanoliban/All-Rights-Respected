@@ -284,11 +284,14 @@ export class ArrWidget {
       return;
     }
 
-    const context = buildWidgetContext({
+    const contextInput: import("./context.js").WidgetContextInput = {
       toolVersion: this.toolVersion,
-      selection: this.state.selection ?? undefined,
       session: this.sessionId,
-    });
+    };
+    if (this.state.selection) {
+      contextInput.selection = this.state.selection;
+    }
+    const context = buildWidgetContext(contextInput);
 
     const payload = {
       creator,
