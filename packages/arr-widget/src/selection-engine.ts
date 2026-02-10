@@ -19,8 +19,8 @@ export interface SelectionEngineOptions {
 export class SelectionEngine {
   private root: Document;
   private mode: SelectionMode | null = null;
-  private onSelect?: (selection: WidgetSelection) => void;
-  private onCancel?: () => void;
+  private onSelect: ((selection: WidgetSelection) => void) | undefined;
+  private onCancel: (() => void) | undefined;
   private ignoreSelector: string;
   private startEvent: MouseEvent | null = null;
 
