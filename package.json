@@ -20,7 +20,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace @allrightsrespected/sdk && npm run build --workspace @allrightsrespected/cli",
+    "build": "npm run build --workspace @allrightsrespected/sdk && npm run build --workspace @allrightsrespected/mcp && npm run build --workspace @allrightsrespected/widget && npm run build --workspace @allrightsrespected/cli",
     "test": "npm run build && vitest run",
     "test:unit": "vitest run packages/arr-core/test",
     "test:integration": "npm run build && vitest run tests",

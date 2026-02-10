@@ -7,6 +7,9 @@ export { SelectionEngine } from "./selection-engine.js";
 export type { WidgetContextInput } from "./context.js";
 export { buildWidgetContext } from "./context.js";
 
+export type { ArrWidgetOptions } from "./widget.js";
+export { ArrWidget, mountWidget } from "./widget.js";
+
 export {
   buildCssPath,
   createObjectSelection,
