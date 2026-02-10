@@ -1,7 +1,10 @@
 import {
   WIDGET_API,
+  EVENT_TO_STATE,
   type WidgetSelection,
   type DraftResponse,
+  type RenewResponse,
+  type RevokeResponse,
 } from "@allrightsrespected/mcp/widget";
 import { SelectionEngine, type SelectionMode } from "./selection-engine.js";
 import { buildWidgetContext } from "./context.js";
@@ -17,6 +20,7 @@ type WidgetState = {
   selection: WidgetSelection | null;
   status: string;
   error: string | null;
+  state: string;
 };
 
 const DEFAULT_ENDPOINT = "http://127.0.0.1:8787";
@@ -85,7 +89,7 @@ export class ArrWidget {
   private endpoint: string;
   private toolVersion: string;
   private sessionId: string;
-  private state: WidgetState = { selection: null, status: "idle", error: null };
+  private state: WidgetState = { selection: null, status: "idle", error: null, state: "idle" };
   private creatorInput: HTMLInputElement;
   private intentInput: HTMLTextAreaElement;
   private toolInput: HTMLInputElement;
@@ -93,6 +97,8 @@ export class ArrWidget {
   private statusEl: HTMLParagraphElement;
   private selectionEl: HTMLParagraphElement;
   private errorEl: HTMLParagraphElement;
+  private stateEl: HTMLParagraphElement;
+  private eventSource: EventSource | null = null;
 
   constructor(options: ArrWidgetOptions = {}) {
     this.endpoint = options.endpoint ?? DEFAULT_ENDPOINT;
@@ -194,6 +200,11 @@ export class ArrWidget {
     this.statusEl.style.color = "#8fd18c";
     this.statusEl.textContent = "Idle";
 
+    this.stateEl = document.createElement("p");
+    this.stateEl.style.fontSize = "11px";
+    this.stateEl.style.color = "#7aa2ff";
+    this.stateEl.textContent = "State: idle";
+
     this.errorEl = document.createElement("p");
     this.errorEl.style.fontSize = "11px";
     this.errorEl.style.color = "#ff8b8b";
@@ -208,6 +219,7 @@ export class ArrWidget {
       actions,
       this.selectionEl,
       this.statusEl,
+      this.stateEl,
       this.errorEl,
     );
 
@@ -227,6 +239,25 @@ export class ArrWidget {
     draftBtn.addEventListener("click", () => void this.createDraft());
     clearBtn.addEventListener("click", () => this.clearState());
 
+    const renewBtn = document.createElement("button");
+    renewBtn.textContent = "Renew";
+    buttonStyle(renewBtn);
+    renewBtn.style.flex = "1";
+
+    const revokeBtn = document.createElement("button");
+    revokeBtn.textContent = "Revoke";
+    buttonStyle(revokeBtn);
+    revokeBtn.style.flex = "1";
+
+    const secondaryActions = document.createElement("div");
+    secondaryActions.style.display = "flex";
+    secondaryActions.style.gap = "8px";
+    secondaryActions.append(renewBtn, revokeBtn);
+    body.append(secondaryActions);
+
+    renewBtn.addEventListener("click", () => void this.renewAttestation());
+    revokeBtn.addEventListener("click", () => void this.revokeAttestation());
+
     this.engine = new SelectionEngine({
       onSelect: (selection) => this.handleSelection(selection),
       onCancel: () => this.setStatus("Selection cancelled"),
@@ -235,10 +266,12 @@ export class ArrWidget {
 
   mount(parent: HTMLElement = document.body): void {
     parent.appendChild(this.root);
+    this.connectEvents();
   }
 
   destroy(): void {
     this.engine.destroy();
+    this.disconnectEvents();
     this.root.remove();
   }
 
@@ -257,6 +290,11 @@ export class ArrWidget {
     this.statusEl.textContent = message;
   }
 
+  private setState(next: string): void {
+    this.state.state = next;
+    this.stateEl.textContent = `State: ${next}`;
+  }
+
   private setError(message: string | null): void {
     if (message) {
       this.errorEl.textContent = message;
@@ -269,9 +307,10 @@ export class ArrWidget {
   }
 
   private clearState(): void {
-    this.state = { selection: null, status: "idle", error: null };
+    this.state = { selection: null, status: "idle", error: null, state: "idle" };
     this.selectionEl.textContent = "No selection yet";
     this.setStatus("Idle");
+    this.setState("idle");
     this.setError(null);
   }
 
@@ -307,6 +346,119 @@ export class ArrWidget {
       this.setStatus(`Draft created (${response.attestation.id})`);
     } catch (error) {
       this.setError(error instanceof Error ? error.message : "Draft failed");
+    }
+  }
+
+  private async renewAttestation(): Promise<void> {
+    this.setError(null);
+    const creator = this.creatorInput.value.trim();
+    if (!creator) {
+      this.setError("creator is required");
+      return;
+    }
+
+    const renews = window.prompt("Attestation ID to renew");
+    if (!renews) {
+      return;
+    }
+
+    const privateKeyPem = window.prompt("Private key PEM");
+    if (!privateKeyPem) {
+      return;
+    }
+
+    const context = buildWidgetContext({
+      toolVersion: this.toolVersion,
+      selection: this.state.selection ?? undefined,
+      session: this.sessionId,
+    });
+
+    const payload = {
+      renews,
+      creator,
+      intent: this.intentInput.value.trim() || undefined,
+      tool: this.toolInput.value.trim() || undefined,
+      license: this.licenseInput.value.trim() || undefined,
+      private_key_pem: privateKeyPem,
+      context,
+      session: this.sessionId,
+    };
+
+    try {
+      const response = await postJson<RenewResponse>(this.endpoint, WIDGET_API.renew, payload);
+      this.setStatus(`Renewed (${response.signed_attestation.attestation.id})`);
+    } catch (error) {
+      this.setError(error instanceof Error ? error.message : "Renew failed");
+    }
+  }
+
+  private async revokeAttestation(): Promise<void> {
+    this.setError(null);
+
+    const attestationId = window.prompt("Attestation ID to revoke");
+    if (!attestationId) {
+      return;
+    }
+
+    const privateKeyPem = window.prompt("Private key PEM");
+    if (!privateKeyPem) {
+      return;
+    }
+
+    const reason = window.prompt("Reason (optional)") || undefined;
+
+    const context = buildWidgetContext({
+      toolVersion: this.toolVersion,
+      selection: this.state.selection ?? undefined,
+      session: this.sessionId,
+    });
+
+    const payload = {
+      attestation_id: attestationId,
+      reason,
+      private_key_pem: privateKeyPem,
+      context,
+      session: this.sessionId,
+    };
+
+    try {
+      const response = await postJson<RevokeResponse>(this.endpoint, WIDGET_API.revoke, payload);
+      this.setStatus(`Revoked (${response.revocation.revocation.attestation_id})`);
+    } catch (error) {
+      this.setError(error instanceof Error ? error.message : "Revoke failed");
+    }
+  }
+
+  private connectEvents(): void {
+    this.disconnectEvents();
+    const url = `${this.endpoint}${WIDGET_API.events}`;
+    const source = new EventSource(url);
+    this.eventSource = source;
+
+    source.onmessage = (event) => {
+      try {
+        const parsed = JSON.parse(event.data) as { event?: { type?: string } };
+        const eventType = parsed.event?.type;
+        if (!eventType) return;
+        const nextState = EVENT_TO_STATE[eventType];
+        if (nextState) {
+          this.setState(nextState);
+        }
+        this.setStatus(`Event: ${eventType}`);
+      } catch {
+        return;
+      }
+    };
+
+    source.onerror = () => {
+      this.setStatus("Event stream disconnected");
+    };
+  }
+
+  private disconnectEvents(): void {
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = null;
     }
   }
 }

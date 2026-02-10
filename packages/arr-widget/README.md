@@ -3,6 +3,7 @@
 Injected browser overlay for in-context ARR attestations.
 
 Status: MVP selection + draft creation panel.
+Includes live event updates and renew/revoke helpers (prompt-driven).
 
 ## Usage (injected)
 
@@ -23,3 +24,7 @@ mountWidget({
 
 ## Dependencies
 - `@allrightsrespected/mcp/widget` for schemas + API paths.
+
+## Live updates
+- Subscribes to `GET /events` on the configured endpoint.
+- Updates widget state from SSE events via `EVENT_TO_STATE`.
